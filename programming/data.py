@@ -10,15 +10,15 @@ class ImageData:
     images_train: np.ndarray
     images_test: np.ndarray
     labels_train: np.ndarray
-    labels_test: Optional[np.ndarray] = None
     count: int
+    labels_test: Optional[np.ndarray] = None
 
 
 def load_data(test_size: float = 0.2, random_state: int = 0) -> ImageData:
     digits = load_digits()
     images = digits.data  # shape (1797, 64)
     labels = digits.target  # shape (1797,)
-    count = len(images[0])
+    count = len(images)
 
     # We want to shuffle the data because otherwise the training set allways
     # contains the same digits and the test set contains the same digits,

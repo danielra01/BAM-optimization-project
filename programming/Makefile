@@ -6,6 +6,9 @@ compile:
 checkstyle:
 	flake8 *.py
 
+lint:
+	autopep8 --in-place --aggressive *.py
+
 clean:
 	rm -rf __pycache__
 	rm -f *.pyc
