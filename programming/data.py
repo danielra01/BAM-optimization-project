@@ -13,8 +13,6 @@ class ImageData:
     count: int
     labels_test: Optional[np.ndarray] = None
 
-# TODO: Normalize the pixel values to the range [0,1].
-
 
 def load_data(test_size: float = 0.2, random_state: int = 0) -> ImageData:
     digits = load_digits()
