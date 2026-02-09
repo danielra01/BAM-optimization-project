@@ -1,7 +1,7 @@
 # BAM-optimization-project
 This repository is for the project in the Basics in Applied Mathematics lecture taught in Freiburg in the winter term of 2025.
 
-The goal is to study a classical machine learning problem: Classification of hand-written digits using logitic regression, solved with stoachstic gradient descent.
+The goal is to study a classical machine learning problem: Classification of hand-written digits using logistic regression, solved with stochastic gradient descent.
 The exact project description can be found here: https://www.syscop.de/files/2025ws/BAM/projects-Optimization.pdf
 
 ## Install
