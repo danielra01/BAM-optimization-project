@@ -13,6 +13,7 @@ class ImageData:
     count: int
     labels_test: Optional[np.ndarray] = None
 
+# TODO: Normalize the pixel values to the range [0,1].
 
 def load_data(test_size: float = 0.2, random_state: int = 0) -> ImageData:
     digits = load_digits()
@@ -20,7 +21,7 @@ def load_data(test_size: float = 0.2, random_state: int = 0) -> ImageData:
     labels = digits.target  # shape (1797,)
     count = len(images)
 
-    # We want to shuffle the data because otherwise the training set allways
+    # We want to shuffle the data because otherwise the training set always
     # contains the same digits and the test set contains the same digits,
     # which is not good for training and testing.
     np.random.seed(random_state)
