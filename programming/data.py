@@ -15,9 +15,10 @@ class ImageData:
 
 # TODO: Normalize the pixel values to the range [0,1].
 
+
 def load_data(test_size: float = 0.2, random_state: int = 0) -> ImageData:
     digits = load_digits()
-    images = digits.data  # shape (1797, 64)
+    images = digits.data / 16  # shape (1797, 64)
     labels = digits.target  # shape (1797,)
     count = len(images)
 

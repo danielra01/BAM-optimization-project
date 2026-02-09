@@ -3,7 +3,7 @@ import data
 
 def main():
     ImageData = data.load_data()
-    print(ImageData.count)
+    print(ImageData.images_train[0])
 
 
 if __name__ == "__main__":
