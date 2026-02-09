@@ -1,0 +1,33 @@
+\section{Logistic regression for multi-class classification}
+Logistic regression is a commonly used model for classification tasks. In our case we want to use logistic regression for multi-class classification, which is a generalization of the binary logistic regression.
+
+In our case, we want to predict the class of a given $8\times 8$ grayscale image of a hand written digit. One would expect that a given input can not be classified as more than one digit at the same time. Therefore, we want to compute the probability/score of a given input image to belong to every of the 10 classes (digits from 0 to 9) and assign the class with the highest probability/score to the input image.
+
+\subsection{Formalization of our problem}\;\\
+An input image is represented as a vector $a_j \in \mathbb{R}^{64}$. Each entry of the vector is an integer between 0 and 16 and corresponds to the intensity of a pixel in the image with 0 being the lowest intensity and 16 being the highest intensity. Each image $a_j$ in the dataset is associated with a label $y_j \in \{0,\ldots,9\}$, which is the digit that is represented in the image. In order to use the labels in our model, we encode them into one-hot vectors $p_j \in \{0,1\}^{10}$, where the $i$-th entry is $1$ if the label is $i$ and $0$ otherwise.\cite{scikitlearn}
+
+We want to train a function $\varphi: \mathbb{R}^{64} \times (\mathbb{R}^{64}\times \mathbb{R})^{10} \rightarrow \mathbb{R}^{10}$ that takes an input image $a_j$ and a parameter $x=(w_i, b_i)_{i=0}^9$ and outputs a vector of scores for each class. The score for class $i$ is computed as $\varphi(a_j;x)_i = a_j^Tw_i + b_i$. The $w_i \in \mathbb{R}^{64}$ is a weight vector and $b_i \in \mathbb{R}$ is a bias term for class $i$.
+
+The training of the model consists of the following optimization problem 
+\begin{align*}
+    \underset{x\in(\mathbb{R}^{64}\times \mathbb{R})^{10}}{\text{minimize}} \sum_{j=1}^N L(p_j,\varphi(a_j;x)),
+\end{align*}
+with $N\in \mathbb{N}$ being the number of training samples and $L$ the cross entropy loss defined as
+\begin{align*}
+    L(p,s)=\log\!\Big(\sum_{l=0}^{9} \exp\big(s_l\big)\Big)
+    \;-\;
+    \sum_{i=0}^{9} p_i\,s_i.
+\end{align*}
+After the model has been trained, we can use it to classify new input images $a$ by computing $\varphi(a;x)$ and assigning the class with the highest score to the input image, i.e.
+\begin{align*}
+    \tilde{y} = \underset{i\in\{0,\ldots,9\}}{\arg\max}\; \varphi(a;x)_i.
+\end{align*}
+
+The values of $\varphi(a_j;x)_i$ can be interpreted as probabilities of the input image $a_j$ belonging to class $i$ after applying the softmax function, i.e.
+\begin{align*}
+    \sigma(s)_i = \frac{\exp(s_i)}{\sum_{l=0}^{9} \exp(s_l)}.
+\end{align*}
+
+
+
+
