@@ -29,7 +29,6 @@ The values of $\varphi(a_j;x)_i$ can be interpreted as probabilities of the inpu
     \sigma(s)_i = \frac{\exp(s_i)}{\sum_{l=0}^{9} \exp(s_l)}.
 \end{align*}
 
-\TODO{What about smoothness?}
 \subsection{Solvability}\;\\
 The given optimization problem is a convex problem. This is because the log-sum-exp function is convex as we have already proved in the lecture. For reference one can also check \cite[72,74]{Boyd2009}. 
 Also the second term of our loss function \cref{eq:loss-function} is linear and therefore convex. Also, $\varphi$ is an affine mapping in $x$. And at the same time convex function over an affine function is also convex (cf. \cite[67]{Boyd2009}).
@@ -51,7 +50,7 @@ Therefore, we have
 \end{align*}
 This implies that for a solution $x$ of our optimization problem, we get arbitrary additional solutions, e.g. $x'=(w_i + c\mathds{1}, b_i)_{i=0}^9$ for any constant $c \in \mathbb{R}$. Therefore, the optimization problem is not uniquely solvable.
 
-Even if we ignore non-uniqueness, the minimum in general may fail to be attained at all. A reason is linear separability of the training data. For
+Even if we ignore non-uniqueness, the minimum in general may fail to be attained at all. A reason is linear separability of the training data. For a parameter $x$ and
 \begin{align*}
 s_{j,i} := \varphi(a_j;x)_i = a_j^\top w_i + b_i,
 \end{align*}
@@ -61,38 +60,31 @@ and $p_{j,y_j}=1$, we can rewrite the loss as
 L(p_j,s_j)=\log\Big(\sum_{l=0}^9 e^{s_{j,l}}\Big)-s_{j,y_j}
 = \log\Big(1+\sum_{i\neq y_j} e^{-(s_{j,y_j}-s_{j,i})}\Big) \geq 0.
 \end{align}
-Hence $L(p_j,s_j)$ is gets small when all the $s_{j,y_j}-s_{j,i}$ are large, i.e. when the correct class score $s_{j,y_j}$ dominates all other scores $s_{j,i}$ by a large margin $\gamma >0$. If this is the case, we call the dataset \emph{separable}.
-% \begin{defn}
-% If there exists a parameter vector $x$ and a margin $\gamma>0$ such that for every training sample $a_j$ the correct class score dominates all others by at least $\gamma > 0$, i.e. we have for all $j$ and $0 \leq i\leq 9$ and $i \neq y_j$
-% \begin{align*}
-% s_{j,y_j} \ge s_{j,i} + \gamma,
-% \end{align*}
-% then the dataset is called \emph{separable}.
-% \end{defn}
-We can then scale the parameters by any factor $t>0$, i.e. we consider
+Hence $L(p_j,s_j)$ is gets small when all the $s_{j,y_j}-s_{j,i}$ are large, e.g. when the correct class score $s_{j,y_j}$ dominates all other scores $s_{j,i}$ by a large margin $\gamma >0$. If there exists a parameter $\bar{x}=(\bar{w}_i, \bar{b}_i)_{i=0}^9$ such that this is the case, we call the dataset \emph{separable}.
+
+We are then able to scale the parameter $\bar x$ with a factor $t>0$
 \begin{align*} 
-    x^{(t)} := (t w_i, t b_i)_{i=0}^9. 
+    \bar x^{(t)} := (t \bar{w}_i, t \bar{b}_i)_{i=0}^9. 
 \end{align*}
-Then $s_{j,i}^{(t)} = \varphi(a_j;x^{(t)})_i = t\,s_{j,i}$ and the differences scale as
+and get $s_{j,i}^{(t)} = \varphi(a_j;x^{(t)})_i = t\,s_{j,i}$. Thus, for the differences we then get
 \begin{align*}
     s_{j,y_j}^{(t)}-s_{j,i}^{(t)} = t(s_{j,y_j}-s_{j,i}) \ge t\gamma.
 \end{align*}
 If we use this, the above expression \cref{eq:loss-function-rewrite} yields
 \begin{align*}
     0 
-    \leq L\big(p_j,\varphi(a_j;x^{(t)})\big)
+    \leq L\big(p_j,\varphi(a_j;\bar x^{(t)})\big)
     = \log\Big(1+\sum_{i\neq y_j} e^{-t(s_{j,y_j}-s_{j,i})}\Big)
     \leq \log\big(1+9e^{-t\gamma}\big)\xrightarrow[t\to\infty]{} 0.
 \end{align*}
-Therefore, the optimization term $\sum_{j=1}^N L(p_j,\varphi(a_j;x^{(t)}))$ gets arbitrarily close to $0$, but there is no minimizer to the problem.
+Therefore, if there exists such a separating parameter $\bar x$, the optimization term $\sum_{j=1}^N L(p_j,\varphi(a_j;\bar x^{(t)}))$ is going to be arbitrarily small for large $t$, i.e. for large weights and biases $t \bar{w_i}$ and $t \bar{b_i}$.
+This implies that the minimum of our optimization problem is not attained at a finite parameter $x$ and therefore the optimization problem is not solvable.
+\TODO{Explain what is happening in the seperable case from a geometric point of view!}
 \begin{rem}
     The idea, that linear separability can be a problem for logistic regression, was inspired by \cite[Linear Separability and Regularization]{Adams2018}.
 \end{rem}
-\TODO{Maybe we can say a bit more what is actually happening here.}
 
 \subsection{Regularization}\;\\
 solves some problems \TODO{explain why regularization is a good thing to do!}
 
-
-
-
+\TODO{It is fairly obvious that the optimization problem is $C^\infty$. Where should we put this?}
