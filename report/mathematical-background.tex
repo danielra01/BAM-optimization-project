@@ -29,6 +29,7 @@ The values of $\varphi(a_j;x)_i$ can be interpreted as probabilities of the inpu
     \sigma(s)_i = \frac{\exp(s_i)}{\sum_{l=0}^{9} \exp(s_l)}.
 \end{align*}
 
+\TODO{What about smoothness?}
 \subsection{Solvability}\;\\
 The given optimization problem is a convex problem. This is because the log-sum-exp function is convex as we have already proved in the lecture. For reference one can also check \cite[72,74]{Boyd2009}. 
 Also the second term of our loss function \cref{eq:loss-function} is linear and therefore convex. Also, $\varphi$ is an affine mapping in $x$. And at the same time convex function over an affine function is also convex (cf. \cite[67]{Boyd2009}).
@@ -87,6 +88,7 @@ Therefore, the optimization term $\sum_{j=1}^N L(p_j,\varphi(a_j;x^{(t)}))$ gets
 \begin{rem}
     The idea, that linear separability can be a problem for logistic regression, was inspired by \cite[Linear Separability and Regularization]{Adams2018}.
 \end{rem}
+\TODO{Maybe we can say a bit more what is actually happening here.}
 
 \subsection{Regularization}\;\\
 solves some problems \TODO{explain why regularization is a good thing to do!}
