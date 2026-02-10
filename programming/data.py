@@ -14,7 +14,7 @@ class ImageData:
     labels_test: Optional[np.ndarray] = None
 
 
-def load_data(test_size: float = 0.2, random_state: int = 0) -> ImageData:
+def load_data(train_size: float = 0.7, random_state: int = 0) -> ImageData:
     digits = load_digits()
     images = digits.data / 16  # shape (1797, 64)
     labels = digits.target  # shape (1797,)
@@ -29,11 +29,11 @@ def load_data(test_size: float = 0.2, random_state: int = 0) -> ImageData:
     labels = labels[indices]
 
     # Split into training and test sets with the given proportions
-    split_index = int(count * test_size)
-    images_test = images[:split_index]
-    labels_test = labels[:split_index]
-    images_train = images[split_index:]
-    labels_train = labels[split_index:]
+    split_index = int(count * train_size)
+    images_train = images[:split_index]
+    labels_train = labels[:split_index]
+    images_test = images[split_index:]
+    labels_test = labels[split_index:]
 
     return ImageData(
         images_train=images_train,
