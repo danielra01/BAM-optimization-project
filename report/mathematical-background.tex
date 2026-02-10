@@ -13,11 +13,12 @@ The training of the model consists of the following optimization problem
     \underset{x\in(\mathbb{R}^{64}\times \mathbb{R})^{10}}{\text{minimize}} \sum_{j=1}^N L(p_j,\varphi(a_j;x)),
 \end{align*}
 with $N\in \mathbb{N}$ being the number of training samples and $L$ the cross entropy loss defined as
-\begin{align*}
+\begin{align}
+    \label{eq:loss-function}
     L(p,s)=\log\!\Big(\sum_{l=0}^{9} \exp\big(s_l\big)\Big)
     \;-\;
     \sum_{i=0}^{9} p_i\,s_i.
-\end{align*}
+\end{align}
 After the model has been trained, we can use it to classify new input images $a$ by computing $\varphi(a;x)$ and assigning the class with the highest score to the input image, i.e.
 \begin{align*}
     \tilde{y} = \underset{i\in\{0,\ldots,9\}}{\arg\max}\; \varphi(a;x)_i.
@@ -27,6 +28,28 @@ The values of $\varphi(a_j;x)_i$ can be interpreted as probabilities of the inpu
 \begin{align*}
     \sigma(s)_i = \frac{\exp(s_i)}{\sum_{l=0}^{9} \exp(s_l)}.
 \end{align*}
+
+\subsection{Solvability}\;\\
+The given optimization problem is a convex problem. This is because the log-sum-exp function is convex as we have already proved in the lecture. For reference one can also check \cite[72,74]{Boyd2009}. 
+Also the second term of our loss function \cref{eq:loss-function} is linear and therefore convex. Also, $\varphi$ is an affine mapping in $x$. And at the same time convex function over an affine function is also convex (cf. \cite[67]{Boyd2009}).
+
+
+In general however, the optimization problem is not necessarily solvable. This is because the loss function \cref{eq:loss-function} is not strictly convex in its scores $s$ and therefore not strictly convex in the parameter $x$. 
+
+This, is because the loss function \cref{eq:loss-function} is invariant under the addition of the same constant to every score $s_i$. More precisely, for a constant $c \in \mathbb{R}$ we have
+\begin{align*}
+    \log\Big(\sum_{l=0}^{9} \exp\big(s_l + c\big)\Big) = \log\Big(\exp(c) \sum_{l=0}^{9} \exp\big(s_l\big)\Big) =\log\Big(\sum_{l=0}^{9} \exp\big(s_l\big)\Big) + c
+\end{align*}
+and also 
+\begin{align*}
+    \sum_{i=0}^{9} p_i(s_i + c) = \sum_{i=0}^{9} p_is_i + c.
+\end{align*}
+Therefore, we have 
+\begin{align*}
+    L(p,s+c\mathds{1}) = \log\Big(\sum_{l=0}^{9} \exp\big(s_l + c\big)\Big) - \sum_{i=0}^{9} p_i(s_i + c) = L(p,s) + c - c = L(p,s).
+\end{align*}
+This implies that for a solution $x$ of our optimization problem, we get arbitrary additional solutions, e.g. $x'=(w_i + c\mathds{1}, b_i)_{i=0}^9$ for any constant $c \in \mathbb{R}$. Therefore, the optimization problem is not uniquely solvable.
+
 
 
 
