@@ -2,7 +2,7 @@
 
 Found 3 TODO items that need GitHub issues:
 
-## 1. TODO: Explain what is happening in the separable case from a geome...
+## 1. TODO: Explain what is happening in the separable case from a geometric point...
 
 ## TODO Found in Code
 
@@ -57,7 +57,7 @@ This TODO was found at line 88 in `report/mathematical-background.tex`.
 
 ---
 
-## 3. TODO: It is fairly obvious that the optimization problem is $C^\in...
+## 3. TODO: It is fairly obvious that the optimization problem is $C^\infty$. Wher...
 
 ## TODO Found in Code
 

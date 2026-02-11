@@ -105,8 +105,22 @@ def create_issue_template(todo: Dict[str, Any], index: int) -> Dict[str, str]:
     # Extract relative path
     rel_path = todo['file'].replace(os.getcwd() + '/', '')
     
-    # Create title
-    title = f"TODO: {todo['text'][:60]}" + ("..." if len(todo['text']) > 60 else "")
+    # Create title - truncate smartly to avoid breaking LaTeX/special chars
+    max_title_len = 70
+    title_text = todo['text']
+    if len(title_text) > max_title_len:
+        # Try to truncate at a word boundary
+        truncated = title_text[:max_title_len]
+        # Don't break in the middle of LaTeX commands or special characters
+        if '$' in truncated and truncated.count('$') % 2 != 0:
+            # Odd number of $ signs means we broke a LaTeX expression
+            # Find the last complete $ pair
+            last_complete = truncated.rfind('$', 0, truncated.rfind('$'))
+            if last_complete > 20:  # Make sure we keep a reasonable amount
+                truncated = truncated[:last_complete]
+        title_text = truncated.rstrip() + "..."
+    
+    title = f"TODO: {title_text}"
     
     # Create body
     body = f"""## TODO Found in Code
