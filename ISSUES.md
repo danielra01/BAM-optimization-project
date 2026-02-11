@@ -13,7 +13,7 @@ Add a geometric explanation of what is happening in the separable case. Currentl
 
 **Current TODO:**
 ```latex
-\TODO{Explain what is happening in the seperable case from a geometric point of view!}
+\TODO{Explain what is happening in the separable case from a geometric point of view!}
 ```
 
 **Location in document:** After the mathematical proof showing that the minimum is not attained at a finite parameter when data is separable.
