@@ -13,11 +13,11 @@ class Model:
 def init_model(image_dim: int = 64, num_classes: int = 10,
                seed: int = 0) -> Model:
     np.random.seed(seed)
-    W = np.random.randn(image_dim, num_classes)
+    w = np.random.randn(image_dim, num_classes)
     # Keep bises at zero for now, since I dont have a good intuition for how
     # to initialize them and they can be learned during training anywy
     b = np.zeros(num_classes, dtype=np.float64)
-    return Model(weights=W, biases=b)
+    return Model(weights=w, biases=b)
 
 
 def scores(model: Model, images: np.ndarray) -> np.ndarray:
@@ -26,7 +26,7 @@ def scores(model: Model, images: np.ndarray) -> np.ndarray:
 
 def loss(scores: np.ndarray, labels: np.ndarray) -> float:
     log_sum_exp = np.log(np.sum(np.exp(scores), axis=1))
-    # THis should be the same as using one hot vectors
+    # THis should be the same as using sum with one hot vectors
     ps = scores[np.arange(labels.size), labels]
     return np.mean(log_sum_exp - ps)
 
