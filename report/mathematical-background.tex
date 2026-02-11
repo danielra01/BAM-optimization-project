@@ -1,7 +1,7 @@
 \section{Logistic regression for multi-class classification}
 Logistic regression is a commonly used model for classification tasks. In our case we want to use logistic regression for multi-class classification, which is a generalization of the binary logistic regression.
 
-In our case, we want to predict the class of a given $8\times 8$ grayscale image of a hand written digit. One would expect that a given input can not be classified as more than one digit at the same time. Therefore, we want to compute the probability/score of a given input image to belong to every of the 10 classes (digits from 0 to 9) and assign the class with the highest probability/score to the input image.
+In our case, we want to predict the class of a given $8\times 8$ grayscale image of a hand written digit. One would expect that a given input can not be classified as more than one digit at the same time. Therefore, we want to compute the probability of a given input image to belong to every of the 10 classes (digits from 0 to 9) and assign the class with the highest probability to the input image.
 
 \subsection{Our problem}\;\\
 An input image is represented as a vector $a_j \in \mathbb{R}^{64}$. Each entry of the vector is an integer between 0 and 16 and corresponds to the intensity of a pixel in the image with 0 being the lowest intensity and 16 being the highest intensity. Each image $a_j$ in the dataset is associated with a label $y_j \in \{0,\ldots,9\}$, which is the digit that is represented in the image. In order to use the labels in our model, we encode them into one-hot vectors $p_j \in \{0,1\}^{10}$, where the $i$-th entry is $1$ if the label is $i$ and $0$ otherwise.\cite{scikitlearn}
@@ -9,9 +9,10 @@ An input image is represented as a vector $a_j \in \mathbb{R}^{64}$. Each entry 
 We want to train a function $\varphi: \mathbb{R}^{64} \times (\mathbb{R}^{64}\times \mathbb{R})^{10} \rightarrow \mathbb{R}^{10}$ that takes an input image $a_j$ and a parameter $x=(w_i, b_i)_{i=0}^9$ and outputs a vector of scores for each class. The score for class $i$ is computed as $\varphi(a_j;x)_i = a_j^Tw_i + b_i$. The $w_i \in \mathbb{R}^{64}$ is a weight vector and $b_i \in \mathbb{R}$ is a bias term for class $i$.
 
 The training of the model consists of the following optimization problem 
-\begin{align*}
-    \underset{x\in(\mathbb{R}^{64}\times \mathbb{R})^{10}}{\text{minimize}} \sum_{j=1}^N L(p_j,\varphi(a_j;x)),
-\end{align*}
+\begin{align}
+    \label{eq:optimization-problem}
+    \underset{x\in(\mathbb{R}^{64}\times \mathbb{R})^{10}}{\text{minimize }} \frac{1}{N}\sum_{j=1}^N L(p_j,\varphi(a_j;x)),
+\end{align}
 with $N\in \mathbb{N}$ being the number of training samples and $L$ the cross entropy loss defined as
 \begin{align}
     \label{eq:loss-function}
@@ -24,14 +25,37 @@ After the model has been trained, we can use it to classify new input images $a$
     \tilde{y} = \underset{i\in\{0,\ldots,9\}}{\arg\max}\; \varphi(a;x)_i.
 \end{align*}
 
-The values of $\varphi(a_j;x)_i$ can be interpreted as probabilities of the input image $a_j$ belonging to class $i$ after applying the softmax function, i.e.
-\begin{align*}
+For logistic regression the scores in $\varphi(a_j;x)_i$ are interpreted as probabilities by applying the softmax function, i.e.
+\begin{align}
+    \label{eq:softmax-function}
     \sigma(s)_i = \frac{\exp(s_i)}{\sum_{l=0}^{9} \exp(s_l)}.
+\end{align}
+Note that in order to classify an input image, we do not need to compute the probabilities $\sigma(\varphi(a;x))_i$ explicitly. This is because the softmax function is monotonically increasing in each of its entries. Therefore, the class with the highest score is also the class with the highest probability. However, we will see in the next section that the softmax function is important for the choice of our loss function.
+
+\subsection{Loss function}\;\\
+We want to briefly discuss the choice of the loss function \cref{eq:loss-function}. For this sections we used \cite[Section 6.2.2.3]{Goodfellow2016} as a reference. In general, for a given input image $a_j$ we want to predict the probabilities $\sigma(\varphi(a_j;x))_i$ to belong to each of the classes $0 \leq i \leq 9$. 
+
+For this, we want our model to maximize the likelihood to observe the training data. If we assume each training image to be independent, the likelihood that our model predicts the observed training data correctly is given as
+\begin{align*}
+    \mathcal{L}(x) := \prod_{j=1}^N \sigma(\varphi(a_j;x))_{y_j}.
 \end{align*}
+In order to deal with sums instead of products, we can equivalently minimize
+\begin{align}
+    \label{eq:negative-log-likelihood}
+    -\log \mathcal{L}(x) = -\sum_{j=1}^N \log \sigma(\varphi(a_j;x))_{y_j}.
+\end{align}
+If we now use the definition of the softmax function \cref{eq:softmax-function}, we can write
+\begin{align*}
+    -\log(\sigma(\varphi(a_j;x))_{y_j}) &= -\log\Big(\frac{\exp(\varphi(a_j;x)_{y_j})}{\sum_{l=0}^{9} \exp(\varphi(a_j;x)_l)}\Big) \\ &= \log\Big(\sum_{l=0}^{9} \exp(\varphi(a_j;x)_l)\Big) - \varphi(a_j;x)_{y_j}.
+\end{align*}
+The last expression is identical to the loss function in \cref{eq:loss-function}, when substituting $\varphi(a_j;x)_i$ with $s_i$. Therefore, minimizing \cref{eq:negative-log-likelihood} yields the same result as solving our optimization problem in \cref{eq:optimization-problem}. Also one can see that the choice of the softmax function to get the probabilities from the scores is crucial for the choice of our loss function.
+
+
+
 
 \subsection{Solvability}\;\\
 The given optimization problem is a convex problem. This is because the log-sum-exp function is convex as we have already proved in the lecture. For reference one can also check \cite[72,74]{Boyd2009}. 
-Also the second term of our loss function \cref{eq:loss-function} is linear and therefore convex. Also, $\varphi$ is an affine mapping in $x$. And at the same time convex function over an affine function is also convex (cf. \cite[67]{Boyd2009}).
+Also the second term of our loss function \cref{eq:loss-function} is linear and therefore convex. Also, $\varphi$ is an affine mapping in $x$. And at the same time a convex function over an affine function is also convex (cf. \cite[67]{Boyd2009}).
 
 
 In general however, the optimization problem is not necessarily solvable. This is because the loss function \cref{eq:loss-function} is not strictly convex in its scores $s$ and therefore not strictly convex in the parameter $x$. 
