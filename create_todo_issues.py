@@ -32,8 +32,12 @@ EXCLUDE_PATTERNS = [
     '*.pyc',
     '*.pyo',
     'create_todo_issues.py',  # Exclude this script itself
+    'auto_create_issues.py',  # Exclude the API script
     'todo_issues.json',
     'TODO_ISSUES.md',
+    'README_TODO_ISSUES.md',
+    'IMPLEMENTATION_SUMMARY.md',
+    'ISSUE_CREATION_NOTE.md',
 ]
 
 
