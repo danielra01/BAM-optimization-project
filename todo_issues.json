@@ -1,0 +1,25 @@
+[
+  {
+    "title": "TODO: Explain what is happening in the seperable case from a geome...",
+    "body": "## TODO Found in Code\n\n**File:** `report/mathematical-background.tex`  \n**Line:** 82\n\n### Description\nExplain what is happening in the seperable case from a geometric point of view!\n\n### Context\n```\nTherefore, if there exists such a separating parameter $\\bar x$, the optimization term $\\sum_{j=1}^N L(p_j,\\varphi(a_j;\\bar x^{(t)}))$ is going to be arbitrarily small for large $t$, i.e. for large weights and biases $t \\bar{w_i}$ and $t \\bar{b_i}$.\nThis implies that the minimum of our optimization problem is not attained at a finite parameter $x$ and therefore the optimization problem is not solvable.\n\\TODO{Explain what is happening in the seperable case from a geometric point of view!}\n\\begin{rem}\n    The idea, that linear separability can be a problem for logistic regression, was inspired by \\cite[Linear Separability and Regularization]{Adams2018}.\n```\n\n### Location\nThis TODO was found at line 82 in `report/mathematical-background.tex`.\n\n---\n*This issue was automatically generated from a TODO comment in the code.*\n",
+    "labels": [
+      "todo",
+      "documentation"
+    ]
+  },
+  {
+    "title": "TODO: explain why regularization is a good thing to do!",
+    "body": "## TODO Found in Code\n\n**File:** `report/mathematical-background.tex`  \n**Line:** 88\n\n### Description\nexplain why regularization is a good thing to do!\n\n### Context\n```\n\\subsection{Regularization}\\;\\\\\nsolves some problems \\TODO{explain why regularization is a good thing to do!}\n\n\\TODO{It is fairly obvious that the optimization problem is $C^\\infty$. Where should we put this?}\n```\n\n### Location\nThis TODO was found at line 88 in `report/mathematical-background.tex`.\n\n---\n*This issue was automatically generated from a TODO comment in the code.*\n",
+    "labels": [
+      "todo",
+      "documentation"
+    ]
+  },
+  {
+    "title": "TODO: It is fairly obvious that the optimization problem is $C^\\in...",
+    "body": "## TODO Found in Code\n\n**File:** `report/mathematical-background.tex`  \n**Line:** 90\n\n### Description\nIt is fairly obvious that the optimization problem is $C^\\infty$. Where should we put this?\n\n### Context\n```\nsolves some problems \\TODO{explain why regularization is a good thing to do!}\n\n\\TODO{It is fairly obvious that the optimization problem is $C^\\infty$. Where should we put this?}\n```\n\n### Location\nThis TODO was found at line 90 in `report/mathematical-background.tex`.\n\n---\n*This issue was automatically generated from a TODO comment in the code.*\n",
+    "labels": [
+      "todo"
+    ]
+  }
+]
