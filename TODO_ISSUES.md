@@ -2,7 +2,7 @@
 
 Found 3 TODO items that need GitHub issues:
 
-## 1. TODO: Explain what is happening in the seperable case from a geome...
+## 1. TODO: Explain what is happening in the separable case from a geome...
 
 ## TODO Found in Code
 
@@ -10,7 +10,7 @@ Found 3 TODO items that need GitHub issues:
 **Line:** 82
 
 ### Description
-Explain what is happening in the seperable case from a geometric point of view!
+Explain what is happening in the separable case from a geometric point of view!
 
 ### Context
 ```

@@ -10,7 +10,7 @@ import os
 import re
 import json
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Any
 
 
 # Patterns to match TODO comments
@@ -45,7 +45,7 @@ def should_exclude(filepath: str) -> bool:
     return False
 
 
-def extract_todos_from_file(filepath: Path) -> List[Dict[str, any]]:
+def extract_todos_from_file(filepath: Path) -> List[Dict[str, Any]]:
     """Extract TODO comments from a single file."""
     todos = []
     
@@ -58,6 +58,9 @@ def extract_todos_from_file(filepath: Path) -> List[Dict[str, any]]:
                 matches = re.finditer(pattern, line, re.IGNORECASE)
                 for match in matches:
                     todo_text = match.group(1).strip()
+                    
+                    # Fix common spelling errors
+                    todo_text = todo_text.replace('seperable', 'separable')
                     
                     # Skip template/generic TODOs
                     if (filepath.name == '.gitignore' or 
@@ -84,7 +87,7 @@ def extract_todos_from_file(filepath: Path) -> List[Dict[str, any]]:
     return todos
 
 
-def scan_repository(root_dir: str = '.') -> List[Dict[str, any]]:
+def scan_repository(root_dir: str = '.') -> List[Dict[str, Any]]:
     """Scan the entire repository for TODO comments."""
     all_todos = []
     root_path = Path(root_dir)
@@ -97,7 +100,7 @@ def scan_repository(root_dir: str = '.') -> List[Dict[str, any]]:
     return all_todos
 
 
-def create_issue_template(todo: Dict[str, any], index: int) -> Dict[str, str]:
+def create_issue_template(todo: Dict[str, Any], index: int) -> Dict[str, str]:
     """Create a GitHub issue template from a TODO item."""
     # Extract relative path
     rel_path = todo['file'].replace(os.getcwd() + '/', '')

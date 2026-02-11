@@ -17,7 +17,7 @@ The following scripts and files have been created to help manage TODO items:
 The scripts identified **3 TODO items** in the repository:
 
 1. **File:** `report/mathematical-background.tex`, **Line:** 82
-   - Explain what is happening in the seperable case from a geometric point of view!
+   - Explain what is happening in the separable case from a geometric point of view!
 
 2. **File:** `report/mathematical-background.tex`, **Line:** 88
    - explain why regularization is a good thing to do!
