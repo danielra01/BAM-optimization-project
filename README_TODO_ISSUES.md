@@ -7,9 +7,10 @@ This directory contains tools to automatically find TODO comments in the reposit
 The following scripts and files have been created to help manage TODO items:
 
 1. **`create_todo_issues.py`** - Python script that scans the repository for TODO comments
-2. **`create_issues.sh`** - Bash script that creates GitHub issues using the GitHub CLI
-3. **`todo_issues.json`** - JSON file containing structured data for all TODO items found
-4. **`TODO_ISSUES.md`** - Markdown file with human-readable summary of all TODOs
+2. **`auto_create_issues.py`** - Python script that automatically creates GitHub issues using the GitHub API  
+3. **`create_issues.sh`** - Bash script that creates GitHub issues using the GitHub CLI
+4. **`todo_issues.json`** - JSON file containing structured data for all TODO items found
+5. **`TODO_ISSUES.md`** - Markdown file with human-readable summary of all TODOs
 
 ## TODOs Found
 
@@ -26,7 +27,28 @@ The scripts identified **3 TODO items** in the repository:
 
 ## How to Create the Issues
 
-### Method 1: Using the Automated Script (Recommended)
+### Method 1: Using the Python API Script (Recommended)
+
+This method uses the GitHub API directly via Python:
+
+```bash
+# First, create a GitHub Personal Access Token
+# Go to: https://github.com/settings/tokens/new
+# - Select scope: 'repo' (Full control of private repositories)
+# - Generate and copy the token
+
+# Run in dry-run mode to preview (no actual changes)
+python3 auto_create_issues.py --dry-run
+
+# Create the issues for real
+export GITHUB_TOKEN="your_token_here"
+python3 auto_create_issues.py
+
+# Or pass the token as an argument
+python3 auto_create_issues.py --token your_token_here
+```
+
+### Method 2: Using the GitHub CLI Script
 
 If you have the GitHub CLI (`gh`) installed and authenticated:
 
@@ -44,7 +66,7 @@ python3 create_todo_issues.py
 ./create_issues.sh
 ```
 
-### Method 2: Manual Creation
+### Method 3: Manual Creation
 
 You can also create the issues manually using the information in `TODO_ISSUES.md`:
 
@@ -54,19 +76,6 @@ You can also create the issues manually using the information in `TODO_ISSUES.md
    - Copy the body
    - Add labels: `todo` and optionally `documentation`
    - Click "Submit new issue"
-
-### Method 3: Using GitHub API
-
-If you prefer to use the GitHub API directly, the `todo_issues.json` file contains all the structured data you need:
-
-```bash
-# Using curl (requires a GitHub personal access token)
-TOKEN="your_github_token"
-REPO="danielra01/BAM-optimization-project"
-
-# Read each issue from the JSON file and create it
-# (See GitHub API documentation for details)
-```
 
 ## Re-scanning for TODOs
 
@@ -99,3 +108,4 @@ Edit the `TODO_PATTERNS` list in `create_todo_issues.py` to recognize different 
 - The script automatically excludes `.git`, `.venv`, `__pycache__`, and other common directories
 - Template TODOs (like those in `.gitignore`) are automatically filtered out
 - The script provides context (surrounding lines) for each TODO to help understand what needs to be done
+- For security, never commit your GitHub token to the repository
