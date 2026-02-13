@@ -1,2 +1,55 @@
-\section{Stochastic gradient descent}
-In order to solve the optimization problem of our logistic regression model, we use stochastic gradient descent.
+\section{Stochastic Gradient Descent}\;\\
+In the previous section we formulated the training of the multi-class logistic regression model as the finite-sum optimization problem
+\begin{align}
+\label{eq:sgd_intro_problem}
+\min_{x\in(\mathbb{R}^{64}\times \mathbb{R})^{10}} 
+f(x)
+:=
+\frac{1}{N}\sum_{j=1}^N f_j(x),
+\qquad
+f_j(x):=L(p_j,\varphi(a_j;x)).
+\end{align}
+Such objectives are standard in statistical learning, since each term corresponds to the loss contributed by one training example.
+We solve \cref{eq:sgd_intro_problem} using gradient-based methods and focus on stochastic gradient descent (SGD), which leverages the finite-sum structure by replacing the full gradient with inexpensive stochastic estimates.\cite{Bottou2012}
+
+\subsection{Gradient-based methods: cost--accuracy trade-offs}\;\\
+The gradient of \cref{eq:sgd_intro_problem} decomposes as
+\begin{align}
+\label{eq:grad_decomp}
+\nabla f(x)=\frac{1}{N}\sum_{j=1}^N \nabla f_j(x).
+\end{align}
+This admits several gradient-based strategies whose performance is governed by the trade-off between \emph{per-iteration cost} and the \emph{quality} of the search direction.
+\noindent\textbf{Deterministic first-order method: full-batch gradient descent.}
+Full-batch gradient descent uses the exact gradient \cref{eq:grad_decomp}:
+\begin{align}
+\label{eq:gd}
+x^{k+1}=x^k-\eta_k \nabla f(x^k).
+\end{align}
+Its main advantage is that the update direction is deterministic and consistent across iterations: for sufficiently small step sizes (e.g.\ $\eta_k\le 1/L$ when $f$ is $L$-smooth), one obtains a guaranteed decrease of the objective and stable convergence behavior.\cite{Boyd2009,Bubeck2015}
+In convex settings, full-batch gradient descent achieves the standard $\mathcal{O}(1/k)$ convergence rate in function value for smooth objectives.\cite{Bubeck2015}
+
+The drawback is computational. Each iteration requires one full pass over all $N$ samples to evaluate $\nabla f(x^k)$, so the per-iteration cost scales linearly with $N$ and can be dominated by memory access and data movement.\cite{Boyd2009}
+As a consequence, while the method is sample-efficient (each update uses all available information), it can be time-inefficient for large datasets: progress per iteration can be good, yet progress per unit wall-clock time may be poor when $N$ is large.
+
+A second practical issue is that the method can be sensitive to ill-conditioning: when the problem is poorly conditioned, the step size required for stability can be small, leading to slow progress unless one uses preconditioning or curvature information (e.g.\ quasi-Newton methods).
+
+\medskip
+\noindent\textbf{Stochastic first-order methods (SGD and mini-batches).}
+SGD replaces $\nabla f(x^k)$ by a stochastic estimator computed from a mini-batch $\mathcal{B}_k$ of size $B$:
+\begin{align}
+\label{eq:minibatch}
+g_k=\frac{1}{B}\sum_{j\in\mathcal{B}_k}\nabla f_j(x^k),
+\qquad
+x^{k+1}=x^k-\eta_k g_k.
+\end{align}
+Under uniform sampling, $g_k$ is an unbiased estimator of the full gradient, i.e.\ $\mathbb{E}[g_k\mid x^k]=\nabla f(x^k)$, and its variance typically decreases as $B$ increases.\cite{Bottou2012,Bubeck2015}
+The key trade-off is that SGD substantially reduces the computational cost per update (from $N$ gradient contributions to $B$), but introduces gradient noise, which affects stability and asymptotic accuracy.
+
+From an optimization viewpoint, the presence of noise changes the convergence picture. With diminishing step sizes (e.g.\ $\eta_k\propto 1/\sqrt{k}$ under bounded variance), SGD converges in expectation with a sublinear rate, and with constant step sizes it typically converges only to a neighborhood whose radius depends on the step size and the gradient variance.\cite{Bubeck2015,Bottou2012}
+In practice this motivates using step-size schedules (constant during an initial phase and then decreasing) and monitoring performance as a function of \emph{epochs} (passes over the data) rather than iterations alone.\cite{Bottou2012}
+
+Mini-batches provide an additional lever. Small $B$ yields very cheap, frequent updates but high variance and potentially oscillatory behavior; larger $B$ reduces variance and makes the method behave closer to full-batch gradient descent, but increases the cost per update.\cite{Bottou2012}
+Importantly, increasing $B$ does not always translate into proportional speedups in wall-clock time: beyond a certain regime, one may observe diminishing returns because the noise is already sufficiently reduced and additional samples mainly add redundant computation.\cite{Shallue2019}
+Thus, $B$ should be viewed as a computational hyperparameter that trades off hardware efficiency (vectorization/throughput) against statistical efficiency (noise reduction).\cite{Bottou2012,Shallue2019}
+
+Overall, full-batch GD tends to be preferable when $N$ is moderate and high-accuracy solutions are required, whereas SGD is often preferable for large-scale training where the objective should decrease quickly in wall-clock time and moderate noise can be tolerated.\cite{Bottou2012,Bubeck2015}
