@@ -33,6 +33,11 @@ def train_sgd(model: Model, images: np.ndarray, labels: np.ndarray,
     n = labels.size
     train_loss: list[float] = []
 
+    obj0 = loss(scores(model, images), labels)
+    if cfg.l2_reg > 0.0:
+        obj0 += 0.5 * cfg.l2_reg * float(np.sum(model.weights ** 2))
+    train_loss.append(float(obj0))
+
     for _ in range(cfg.epochs):
         if cfg.shuffle:
             perm = rng.permutation(n)
