@@ -27,6 +27,11 @@ def train_full_gd(model: Model, images: np.ndarray, labels: np.ndarray,
 
     train_loss: list[float] = []
 
+    obj0 = loss(scores(model, images), labels)
+    if cfg.l2_reg > 0.0:
+        obj0 += 0.5 * cfg.l2_reg * float(np.sum(model.weights ** 2))
+    train_loss.append(float(obj0))
+
     for _ in range(cfg.iterations):
         grad_w, grad_b = gradients(model, images, labels, l2_reg=cfg.l2_reg)
         model.weights -= cfg.learning_rate * grad_w
