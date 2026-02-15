@@ -52,7 +52,10 @@ def train_sgd(model: Model, images: np.ndarray, labels: np.ndarray,
             model.weights -= cfg.learning_rate * grad_w
             model.biases -= cfg.learning_rate * grad_b
 
-        train_loss.append(loss(scores(model, images), labels))
+        obj = loss(scores(model, images), labels)
+        if cfg.l2_reg > 0.0:
+            obj += 0.5 * cfg.l2_reg * float(np.sum(model.weights ** 2))
+        train_loss.append(float(obj))
 
     return SGDHistory(train_loss=train_loss)
 

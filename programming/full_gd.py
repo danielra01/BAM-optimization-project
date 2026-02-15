@@ -25,7 +25,7 @@ def train_full_gd(model: Model, images: np.ndarray, labels: np.ndarray,
     if cfg.iterations <= 0:
         raise ValueError("iterations must be positive")
 
-    history: list[float] = []
+    train_loss: list[float] = []
 
     for _ in range(cfg.iterations):
         grad_w, grad_b = gradients(model, images, labels, l2_reg=cfg.l2_reg)
@@ -35,6 +35,6 @@ def train_full_gd(model: Model, images: np.ndarray, labels: np.ndarray,
         obj = loss(scores(model, images), labels)
         if cfg.l2_reg > 0.0:
             obj += 0.5 * cfg.l2_reg * float(np.sum(model.weights ** 2))
-        history.append(float(obj))
+        train_loss.append(float(obj))
 
-    return OptimHistory(train_loss=history)
+    return OptimHistory(train_loss=train_loss)
