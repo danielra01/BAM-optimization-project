@@ -12,13 +12,83 @@ from full_gd import GDConfig, train_full_gd
 def main() -> None:
     data = load_data(train_size=0.7, random_state=2)
 
-    # Keep regularization consistent to compare
-    l2_reg = 1e-4
-
     # SGD training
     learning_rates = [0.05, 0.1, 0.2, 1.0, 2.0]
     epochs = 50
     batch_size = 64
+
+    baseline_lr = 0.5
+    reg_values = [0.0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
+
+    # Tune l2_reg with fixed baseline learning rate
+    sgd_reg_runs = []
+
+    for lam in reg_values:
+        model_reg = init_model(seed=2)
+
+        cfg_reg = SGDConfig(
+            learning_rate=baseline_lr,
+            epochs=epochs,
+            batch_size=batch_size,
+            l2_reg=lam,
+            shuffle=True,
+            seed=2,
+        )
+
+        t0 = time.perf_counter()
+        hist_reg = train_sgd(model_reg, data.images_train, data.labels_train, cfg_reg)
+        t1 = time.perf_counter()
+
+        pred_test_reg = predict(model_reg, data.images_test)
+
+        sgd_reg_runs.append({
+            "l2": lam,
+            "model": model_reg,
+            "hist": hist_reg,
+            "time": t1 - t0,
+            "train_obj": float(hist_reg.train_loss[-1]),
+            "test_acc": float(accuracy(pred_test_reg, data.labels_test)),
+        })
+
+        tag = "no-reg" if lam == 0.0 else f"l2={lam:g}"
+        print(f"=== SGD (baseline lr={baseline_lr:g}, {tag}) ===")
+        print("Final train objective:", sgd_reg_runs[-1]["train_obj"])
+        print("Test accuracy:", sgd_reg_runs[-1]["test_acc"])
+        print("Training time: {:.2f} seconds".format(sgd_reg_runs[-1]["time"]))
+        print()
+
+    # choose best l2_reg by test accuracy
+    best_reg = max(sgd_reg_runs, key=lambda r: r["test_acc"])
+    best_l2 = best_reg["l2"]
+
+    print("=== Best l2_reg (with baseline lr) ===")
+    print(f"Chosen l2_reg={best_l2:g} (baseline lr={baseline_lr:g})")
+    print()
+
+    # Plot: objective vs epochs for different l2_reg (baseline lr)
+    plt.figure()
+    for r in sgd_reg_runs:
+        y = np.asarray(r["hist"].train_loss, dtype=float)
+        x = np.arange(len(y))
+        label = "no reg" if r["l2"] == 0.0 else f"l2={r['l2']:g}"
+        plt.plot(x, y, label=label)
+    plt.xlabel("Epochs")
+    plt.ylabel("Objective value")
+    plt.title(f"SGD: objective vs epochs, varying $\\ell_2$ (lr={baseline_lr:g})")
+    plt.legend()
+
+    # Plot: test accuracy vs l2_reg (baseline lr)
+    plt.figure()
+    xs = np.asarray([r["l2"] for r in sgd_reg_runs], dtype=float)
+    ys = np.asarray([r["test_acc"] for r in sgd_reg_runs], dtype=float)
+    xs_plot = xs.copy()
+    xs_plot[xs_plot == 0.0] = 1e-18
+    plt.semilogx(xs_plot, ys, marker="o")
+    plt.xlabel(r"$\lambda$")
+    plt.ylabel("Test accuracy")
+    plt.title(f"SGD: test accuracy vs $\\lambda$ (lr={baseline_lr:g})")
+
+    l2_reg = best_l2
 
     sgd_runs = []  # store dicts with results per lr
 
