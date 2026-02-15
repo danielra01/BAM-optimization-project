@@ -93,7 +93,7 @@ def main() -> None:
     x_gd = np.arange(1, len(gd_gap) + 1)
     plt.figure()
     plt.semilogy(x_sgd, sgd_gap + 1e-16, label="SGD gap (per pass)")
-    plt.semilogy(x_gd, gd_gap  + 1e-16, label="Full-GD gap (per pass)")
+    plt.semilogy(x_gd, gd_gap + 1e-16, label="Full-GD gap (per pass)")
     plt.xlabel("Data passes (epochs)")
     plt.ylabel(r"$f(x_k) - f(x^\star)$")
     plt.title("Optimality gap vs data passes (epochs)")
