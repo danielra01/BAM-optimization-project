@@ -19,10 +19,10 @@ def main() -> None:
     model_sgd = init_model(seed=2)
     sgd_cfg = SGDConfig(
         learning_rate=0.5,
-        epochs=300,
+        epochs=50,
         batch_size=64,
         l2_reg=l2_reg,
-        shuffle=True,
+        shuffle=False,
         seed=2,
     )
     sgd_t0 = time.perf_counter()
@@ -61,6 +61,9 @@ def main() -> None:
     print("Final train objective:", gd_hist.train_loss[-1])
     print("Train accuracy:", accuracy(pred_train_gd, data.labels_train))
     print("Test accuracy:", accuracy(pred_test_gd, data.labels_test))
+    print()
+    print("Classification report (Full-batch GD, test):")
+    print(classification_report(data.labels_test, pred_test_gd))
     print("Full-batch GD training time: {:.2f} seconds".format(gd_t1 - gd_t0))
 
     # Plots
