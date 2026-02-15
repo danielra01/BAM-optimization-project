@@ -76,28 +76,28 @@ def main() -> None:
     ConfusionMatrixDisplay.from_predictions(data.labels_test, pred_test_gd)
     plt.title("Confusion matrix (FGD final model)")
 
-    # Objective vs epoch/iteration
+    # Objective vs data passes (epochs)
+    x_sgd = np.arange(1, len(sgd_obj) + 1)
+    x_gd = np.arange(1, len(gd_obj) + 1)
     plt.figure()
-    plt.plot(np.arange(1, len(sgd_obj) + 1), sgd_obj,
-             label="SGD (per epoch)")
-    plt.plot(np.arange(1, len(gd_obj) + 1), gd_obj,
-             label="Full-batch GD (per iter)")
-    plt.xlabel("Epoch / iteration")
+    plt.plot(x_sgd, sgd_obj, label="SGD (per pass)")
+    plt.plot(x_gd, gd_obj, label="Full-GD (per pass)")
+    plt.xlabel("Data passes (epochs)")
     plt.ylabel("Objective value")
-    plt.title("Objective value vs epoch/iteration")
+    plt.title("Objective value vs data passes (epochs)")
     plt.legend()
 
-    # Optimality gap vs epoch/iteration (log scale)
+
+    # Optimality gap vs data passes (epochs) on a log scale
+    x_sgd = np.arange(1, len(sgd_gap) + 1)
+    x_gd = np.arange(1, len(gd_gap) + 1)
     plt.figure()
-    plt.semilogy(np.arange(1, len(sgd_gap) + 1), sgd_gap + 1e-16,
-                 label="SGD gap")
-    plt.semilogy(np.arange(1, len(gd_gap) + 1), gd_gap + 1e-16,
-                 label="Full-batch GD gap")
-    plt.xlabel("Epoch / iteration")
+    plt.semilogy(x_sgd, sgd_gap + 1e-16, label="SGD gap (per pass)")
+    plt.semilogy(x_gd, gd_gap + 1e-16, label="Full-GD gap (per pass)")
+    plt.xlabel("Data passes (epochs)")
     plt.ylabel(r"$f(x_k) - f(x^\star)$")
-    plt.title("Optimality gap vs epoch/iteration")
+    plt.title("Optimality gap vs data passes (epochs)")
     plt.legend()
-
     plt.show()
 
 
