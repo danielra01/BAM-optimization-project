@@ -16,7 +16,7 @@ def main() -> None:
     l2_reg = 1e-4
 
     # SGD training
-    learning_rates = [0.05, 0.1, 0.2, 0.5, 1.0]
+    learning_rates = [0.05, 0.1, 0.2, 1.0, 2.0]
     epochs = 50
     batch_size = 64
 
@@ -97,34 +97,60 @@ def main() -> None:
     plt.legend()
 
     # Full-batch GD training
-    model_gd = init_model(seed=2)
-    gd_cfg = GDConfig(
-        learning_rate=0.5,
-        iterations=300,
-        l2_reg=l2_reg,
-    )
-    gd_t0 = time.perf_counter()
-    gd_hist = train_full_gd(model_gd, data.images_train, data.labels_train,
-                            gd_cfg)
-    gd_t1 = time.perf_counter()
+    gd_learning_rates = [0.05, 0.1, 0.2, 0.5, 1.0]
+    gd_iterations = 300
 
-    pred_train_gd = predict(model_gd, data.images_train)
-    pred_test_gd = predict(model_gd, data.images_test)
+    gd_runs = []
 
-    print("=== Full-batch GD (reference) ===")
-    print("Final train objective:", gd_hist.train_loss[-1])
-    print("Train accuracy:", accuracy(pred_train_gd, data.labels_train))
-    print("Test accuracy:", accuracy(pred_test_gd, data.labels_test))
-    print()
-    print("Classification report (Full-batch GD, test):")
-    print(classification_report(data.labels_test, pred_test_gd))
-    print("Full-batch GD training time: {:.2f} seconds".format(gd_t1 - gd_t0))
+    for lr in gd_learning_rates:
+        model_gd = init_model(seed=2)
 
-    # objective per iteration
-    gd_obj = np.asarray(gd_hist.train_loss, dtype=float)
-    # reference best value
-    f_star = float(np.min(gd_obj))
-    gd_gap = np.maximum(gd_obj - f_star, 0.0)
+        gd_cfg = GDConfig(
+            learning_rate=lr,
+            iterations=gd_iterations,
+            l2_reg=l2_reg,
+        )
+
+        t0 = time.perf_counter()
+        hist = train_full_gd(model_gd, data.images_train, data.labels_train, gd_cfg)
+        t1 = time.perf_counter()
+
+        pred_train = predict(model_gd, data.images_train)
+        pred_test = predict(model_gd, data.images_test)
+
+        run = {
+            "lr": lr,
+            "model": model_gd,
+            "hist": hist,
+            "time": t1 - t0,
+            "train_obj": float(hist.train_loss[-1]),
+            "train_acc": float(accuracy(pred_train, data.labels_train)),
+            "test_acc": float(accuracy(pred_test, data.labels_test)),
+            "pred_test": pred_test,
+        }
+        gd_runs.append(run)
+
+        print(f"=== Full-GD (lr={lr:g}) ===")
+        print("Final train objective:", run["train_obj"])
+        print("Train accuracy:", run["train_acc"])
+        print("Test accuracy:", run["test_acc"])
+        print("Full-GD training time: {:.2f} seconds".format(run["time"]))
+        print()
+
+    # Best GD run (by test accuracy)
+    best_gd = max(gd_runs, key=lambda r: r["test_acc"])
+
+    print("=== Best Full-GD run ===")
+    print(f"Chosen lr={best_gd['lr']:g} (by test accuracy)")
+    print("Classification report (Full-GD best, test):")
+    print(classification_report(data.labels_test, best_gd["pred_test"]))
+
+    # Collect objectives
+    sgd_objs = [(r["lr"], np.asarray(r["hist"].train_loss, dtype=float)) for r in sgd_runs]
+    gd_objs = [(r["lr"], np.asarray(r["hist"].train_loss, dtype=float)) for r in gd_runs]
+
+    # Reference value: best objective reached among all Full-GD runs
+    f_star = float(np.min([np.min(obj) for _, obj in gd_objs]))
 
     # Confusion matrix (SGD final model)
     ConfusionMatrixDisplay.from_predictions(data.labels_test,
@@ -132,17 +158,19 @@ def main() -> None:
     plt.title(f"Confusion matrix (SGD best lr={best['lr']:g})")
 
     # Confusion matrix (FGD final model)
-    ConfusionMatrixDisplay.from_predictions(data.labels_test, pred_test_gd)
-    plt.title("Confusion matrix (FGD final model)")
+    ConfusionMatrixDisplay.from_predictions(data.labels_test,
+                                            best_gd["pred_test"])
+    plt.title(f"Confusion matrix (Full-GD best lr={best_gd['lr']:g})")
 
     # Objective vs data passes (epochs)
     plt.figure()
-    x_gd = np.arange(len(gd_obj))
-    plt.plot(x_gd, gd_obj, label="Full-GD (reference)")
-    for r in sgd_runs:
-        sgd_obj = np.asarray(r["hist"].train_loss, dtype=float)
-        x = np.arange(len(sgd_obj))
-        plt.plot(x, sgd_obj, label=f"SGD lr={r['lr']:g}")
+    for lr, obj in gd_objs:
+        x = np.arange(len(obj))
+        plt.plot(x, obj, label=f"Full-GD lr={lr:g}")
+
+    for lr, obj in sgd_objs:
+        x = np.arange(len(obj))
+        plt.plot(x, obj, label=f"SGD lr={lr:g}")
     plt.xlabel("Data passes (epochs)")
     plt.ylabel("Objective value")
     plt.title("Objective value vs data passes")
@@ -150,14 +178,16 @@ def main() -> None:
 
     # Optimality gap vs data passes (epochs) on a log scale
     plt.figure()
-    plt.semilogy(x_gd, gd_gap + 1e-16, label="Full-GD gap (reference)")
-    for r in sgd_runs:
-        sgd_obj = np.asarray(r["hist"].train_loss, dtype=float)
-        sgd_gap = np.maximum(sgd_obj - f_star, 0.0)
-        x = np.arange(len(sgd_gap))
-        plt.semilogy(x, sgd_gap + 1e-16, label=f"SGD lr={r['lr']:g}")
+    for lr, obj in gd_objs:
+        gap = np.maximum(obj - f_star, 0.0)
+        x = np.arange(len(gap))
+        plt.semilogy(x, gap + 1e-16, label=f"Full-GD lr={lr:g}")
+    for lr, obj in sgd_objs:
+        gap = np.maximum(obj - f_star, 0.0)
+        x = np.arange(len(gap))
+        plt.semilogy(x, gap + 1e-16, label=f"SGD lr={lr:g}")
     plt.xlabel("Data passes (epochs)")
-    plt.ylabel(r"$f(x_k) - f(x^\star)$")
+    plt.ylabel(r"$f(x_k) - f^\star$")
     plt.title("Optimality gap vs data passes (log scale)")
     plt.legend()
 
