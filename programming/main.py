@@ -77,8 +77,8 @@ def main() -> None:
     plt.title("Confusion matrix (FGD final model)")
 
     # Objective vs data passes (epochs)
-    x_sgd = np.arange(1, len(sgd_obj) + 1)
-    x_gd = np.arange(1, len(gd_obj) + 1)
+    x_sgd = np.arange(0, len(sgd_obj))
+    x_gd = np.arange(0, len(gd_obj))
     plt.figure()
     plt.plot(x_sgd, sgd_obj, label="SGD (per pass)")
     plt.plot(x_gd, gd_obj, label="Full-GD (per pass)")
@@ -89,8 +89,8 @@ def main() -> None:
 
 
     # Optimality gap vs data passes (epochs) on a log scale
-    x_sgd = np.arange(1, len(sgd_gap) + 1)
-    x_gd = np.arange(1, len(gd_gap) + 1)
+    x_sgd = np.arange(0, len(sgd_gap))
+    x_gd = np.arange(0, len(gd_gap))
     plt.figure()
     plt.semilogy(x_sgd, sgd_gap + 1e-16, label="SGD gap (per pass)")
     plt.semilogy(x_gd, gd_gap + 1e-16, label="Full-GD gap (per pass)")
