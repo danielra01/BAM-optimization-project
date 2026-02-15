@@ -90,6 +90,7 @@ def main() -> None:
         gap = np.maximum(sgd_obj - sgd_best_final, 0.0)
         x = np.arange(len(gap))
         plt.plot(x, gap + 1e-16, label=f"SGD lr={r['lr']:g}")
+        plt.yscale("log")
     plt.xlabel("Epochs")
     plt.ylabel(r"$f(x_k)-\min f$")
     plt.title("SGD: relative gap vs epochs (log scale)")
