@@ -23,7 +23,7 @@ def main() -> None:
     sgd_runs = []  # store dicts with results per lr
 
     for i, lr in enumerate(learning_rates):
-        model_sgd = init_model(seed=2)  # same init to compare learning rates fairly
+        model_sgd = init_model(seed=2)
 
         sgd_cfg = SGDConfig(
             learning_rate=lr,
@@ -35,7 +35,8 @@ def main() -> None:
         )
 
         t0 = time.perf_counter()
-        hist = train_sgd(model_sgd, data.images_train, data.labels_train, sgd_cfg)
+        hist = train_sgd(model_sgd, data.images_train,
+                         data.labels_train, sgd_cfg)
         t1 = time.perf_counter()
 
         pred_train = predict(model_sgd, data.images_train)
@@ -81,8 +82,9 @@ def main() -> None:
 
     # SGD learning-rate comparison (gap w.r.t. best SGD final value)
     plt.figure()
-    sgd_best_final = float(np.min([float(np.min(np.asarray(r["hist"].train_loss, dtype=float)))
-                                   for r in sgd_runs if len(r["hist"].train_loss) > 0]))
+    sgd_best_final = float(np.min([float(np.min(np.asarray(
+        r["hist"].train_loss, dtype=float)))
+        for r in sgd_runs if len(r["hist"].train_loss) > 0]))
     for r in sgd_runs:
         sgd_obj = np.asarray(r["hist"].train_loss, dtype=float)
         gap = np.maximum(sgd_obj - sgd_best_final, 0.0)
@@ -92,7 +94,6 @@ def main() -> None:
     plt.ylabel(r"$f(x_k)-\min f$")
     plt.title("SGD: relative gap vs epochs (log scale)")
     plt.legend()
-
 
     # Full-batch GD training
     model_gd = init_model(seed=2)
@@ -118,12 +119,15 @@ def main() -> None:
     print(classification_report(data.labels_test, pred_test_gd))
     print("Full-batch GD training time: {:.2f} seconds".format(gd_t1 - gd_t0))
 
-    gd_obj = np.asarray(gd_hist.train_loss, dtype=float)  # objective per iteration
-    f_star = float(np.min(gd_obj))  # reference best value
+    # objective per iteration
+    gd_obj = np.asarray(gd_hist.train_loss, dtype=float)
+    # reference best value
+    f_star = float(np.min(gd_obj))
     gd_gap = np.maximum(gd_obj - f_star, 0.0)
 
     # Confusion matrix (SGD final model)
-    ConfusionMatrixDisplay.from_predictions(data.labels_test, best["pred_test"])
+    ConfusionMatrixDisplay.from_predictions(data.labels_test,
+                                            best["pred_test"])
     plt.title(f"Confusion matrix (SGD best lr={best['lr']:g})")
 
     # Confusion matrix (FGD final model)
@@ -142,7 +146,6 @@ def main() -> None:
     plt.ylabel("Objective value")
     plt.title("Objective value vs data passes")
     plt.legend()
-
 
     # Optimality gap vs data passes (epochs) on a log scale
     plt.figure()
