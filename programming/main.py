@@ -78,7 +78,7 @@ def main() -> None:
 
     # Objective vs data passes (epochs)
     x_sgd = np.arange(1, len(sgd_obj) + 1)
-    x_gd  = np.arange(1, len(gd_obj) + 1)
+    x_gd = np.arange(1, len(gd_obj) + 1)
     plt.figure()
     plt.plot(x_sgd, sgd_obj, label="SGD (per pass)")
     plt.plot(x_gd, gd_obj,  label="Full-GD (per pass)")
