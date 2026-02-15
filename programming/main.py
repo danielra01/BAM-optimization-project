@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report, ConfusionMatrixDisplay
+import time
 
 from data import load_data
 from model import init_model, predict
@@ -24,8 +25,10 @@ def main() -> None:
         shuffle=True,
         seed=2,
     )
+    sgd_t0 = time.perf_counter()
     sgd_hist = train_sgd(model_sgd, data.images_train, data.labels_train,
                          sgd_cfg)
+    sgd_t1 = time.perf_counter()
 
     pred_train_sgd = predict(model_sgd, data.images_train)
     pred_test_sgd = predict(model_sgd, data.images_test)
@@ -37,6 +40,7 @@ def main() -> None:
     print()
     print("Classification report (SGD, test):")
     print(classification_report(data.labels_test, pred_test_sgd))
+    print("SGD training time: {:.2f} seconds".format(sgd_t1 - sgd_t0))
 
     # Full-batch GD training
     model_gd = init_model(seed=2)
@@ -45,8 +49,10 @@ def main() -> None:
         iterations=300,
         l2_reg=l2_reg,
     )
+    gd_t0 = time.perf_counter()
     gd_hist = train_full_gd(model_gd, data.images_train, data.labels_train,
                             gd_cfg)
+    gd_t1 = time.perf_counter()
 
     pred_train_gd = predict(model_gd, data.images_train)
     pred_test_gd = predict(model_gd, data.images_test)
@@ -55,7 +61,7 @@ def main() -> None:
     print("Final train objective:", gd_hist.train_loss[-1])
     print("Train accuracy:", accuracy(pred_train_gd, data.labels_train))
     print("Test accuracy:", accuracy(pred_test_gd, data.labels_test))
-    print()
+    print("Full-batch GD training time: {:.2f} seconds".format(gd_t1 - gd_t0))
 
     # Plots
     sgd_obj = np.asarray(sgd_hist.train_loss,
