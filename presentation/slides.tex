@@ -210,24 +210,24 @@ from sklearn.datasets import load_digits
     \end{frame}
     \begin{frame}
         \frametitle{Results with SGD}
-        We trained the model for $50$ epochs with a mini-batch size of $B=64$ and a learning rate of $\eta_k = 0.5$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
+        We trained the model for $50$ epochs with a mini-batch size of $B=64$ and a learning rate of $\eta_k = 1$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
         \begin{columns}
-            \column{0.5\paperwidth}
+            \column{0.6\paperwidth}
             \centering
             \includegraphics[width=\linewidth]{confusion-matrix-sgd-final-model.png}
 
-            \column{0.5\paperwidth}
+            \column{0.4\paperwidth}
             \centering
             \begin{itemize}
-                \item Accuracy (train data): $0.973$
-                \item Accuracy (test data): $0.962$
-                \item Training Time: TODO
+                \item Train accuracy: $0.983$
+                \item Test accuracy: $0.961$
+                \item Training Time: 30ms
             \end{itemize}
         \end{columns}
     \end{frame}
        \begin{frame}
         \frametitle{Results with FGD}
-        We trained the reference model for $300$ iterations with a learning rate of $\eta_k = 0.5$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
+        We trained a full gradient descent reference model for $300$ iterations with a learning rate of $\eta_k = 1$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
         \begin{columns}
             \column{0.5\paperwidth}
             \centering
@@ -236,9 +236,9 @@ from sklearn.datasets import load_digits
             \column{0.5\paperwidth}
             \centering
             \begin{itemize}
-                \item Accuracy (train data): $0.934$
-                \item Accuracy (test data): $0.929$
-                \item Training Time: TODO
+                \item Train accuracy: $0.957$
+                \item Test accuracy: $0.952$
+                \item Training Time: 90ms
             \end{itemize}
         \end{columns}
     \end{frame}
@@ -252,6 +252,39 @@ from sklearn.datasets import load_digits
             \column{0.5\paperwidth}
             \centering
             \includegraphics[width=\linewidth]{optimality-gap-vs-epoch.png}
+        \end{columns}
+    \end{frame}
+    \begin{frame}
+        \frametitle{Different batch sizes - I}
+        \vspace{-0.5cm}
+        \begin{figure}
+            \includegraphics[scale=0.55]{sgd-batch-sizes.png}
+        \end{figure}
+        Result: Larger batch sizes lead to less noisy gradient estimates but also less frequent updates to the model.
+    \end{frame}
+    \begin{frame}
+        \frametitle{Different batch sizes - II}
+        \begin{columns}
+            \column{0.5\paperwidth}
+            \centering
+            \includegraphics[width=\linewidth]{sgd-time-batch.png}
+
+            \column{0.5\paperwidth}
+            \centering
+            \includegraphics[width=\linewidth]{sgd-batch-accuracy.png}
+        \end{columns}
+    \end{frame}
+    \begin{frame}
+        \frametitle{Different $L^2$-regularization parameters}
+        \vspace{-0.5cm}
+        \begin{columns}
+            \column{0.5\paperwidth}
+            \centering
+            \includegraphics[width=\linewidth]{sgd-reg-accuracy.png}
+
+            \column{0.5\paperwidth}
+            \centering
+            \includegraphics[width=\linewidth]{sgd-reg.png}
         \end{columns}
     \end{frame}
 
