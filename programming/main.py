@@ -166,6 +166,75 @@ def main() -> None:
     plt.title("SGD: relative gap vs epochs (log scale)")
     plt.legend()
 
+    # SGD: sweep over batch_size (mini-batches)
+    batch_sizes = [1, 8, 16, 32, 64, 128, 256]
+
+    # Fix hyperparameters to isolate the effect of batch size
+    fixed_lr = best["lr"]
+    fixed_l2 = l2_reg
+    fixed_epochs = epochs
+
+    sgd_batch_runs = []
+
+    for B in batch_sizes:
+        model_b = init_model(seed=2)
+
+        cfg_b = SGDConfig(
+            learning_rate=fixed_lr,
+            epochs=fixed_epochs,
+            batch_size=B,
+            l2_reg=fixed_l2,
+            shuffle=True,
+            seed=2,
+        )
+
+        t0 = time.perf_counter()
+        hist_b = train_sgd(model_b, data.images_train, data.labels_train, cfg_b)
+        t1 = time.perf_counter()
+
+        pred_test_b = predict(model_b, data.images_test)
+
+        sgd_batch_runs.append({
+            "B": B,
+            "hist": hist_b,
+            "time": t1 - t0,
+            "test_acc": float(accuracy(pred_test_b, data.labels_test)),
+        })
+
+        print(f"=== SGD (lr={fixed_lr:g}, l2={fixed_l2:g}, batch_size={B}) ===")
+        print("Final train objective:", float(hist_b.train_loss[-1]))
+        print("Test accuracy:", sgd_batch_runs[-1]["test_acc"])
+        print("Training time: {:.2f} seconds".format(sgd_batch_runs[-1]["time"]))
+        print()
+
+    # Plot 1: objective vs epochs (different batch sizes)
+    plt.figure()
+    for r in sgd_batch_runs:
+        y = np.asarray(r["hist"].train_loss, dtype=float)
+        x = np.arange(len(y))
+        plt.plot(x, y, label=f"B={r['B']}")
+    plt.xlabel("Epochs")
+    plt.ylabel("Objective value")
+    plt.title(f"SGD: objective vs epochs for different batch sizes (lr={fixed_lr:g}, l2={fixed_l2:g})")
+    plt.legend()
+
+    # Plot 2: test accuracy vs batch size (log-x)
+    plt.figure()
+    xs = np.asarray([r["B"] for r in sgd_batch_runs], dtype=float)
+    ys = np.asarray([r["test_acc"] for r in sgd_batch_runs], dtype=float)
+    plt.semilogx(xs, ys, marker="o")
+    plt.xlabel("Batch size B")
+    plt.ylabel("Test accuracy")
+    plt.title(f"SGD: test accuracy vs batch size (lr={fixed_lr:g}, l2={fixed_l2:g})")
+
+    # Plot 3: time vs batch size (log-x)
+    plt.figure()
+    ts = np.asarray([r["time"] for r in sgd_batch_runs], dtype=float)
+    plt.semilogx(xs, ts, marker="o")
+    plt.xlabel("Batch size B")
+    plt.ylabel("Training time (seconds)")
+    plt.title(f"SGD: time vs batch size (lr={fixed_lr:g}, l2={fixed_l2:g})")
+
     # Full-batch GD training
     gd_learning_rates = [0.05, 0.1, 0.2, 0.5, 1.0]
     gd_iterations = 300
