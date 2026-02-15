@@ -18,7 +18,7 @@ def main() -> None:
     model_sgd = init_model(seed=2)
     sgd_cfg = SGDConfig(
         learning_rate=0.5,
-        epochs=50,
+        epochs=300,
         batch_size=64,
         l2_reg=l2_reg,
         shuffle=True,
