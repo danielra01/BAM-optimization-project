@@ -192,7 +192,50 @@ from sklearn.datasets import load_digits
         \end{itemize}
     \end{frame}
     \begin{frame}
-        TODO: Discuss our results and show some plots
+        \frametitle{Results with SGD}
+        We trained the model for $50$ epochs with a mini-batch size of $B=64$ and a learning rate of $\eta_k = 0.5$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
+        \begin{columns}
+            \column{0.5\paperwidth}
+            \centering
+            \includegraphics[width=\linewidth]{confusion-matrix-sgd-final-model.png}
+
+            \column{0.5\paperwidth}
+            \centering
+            \begin{itemize}
+                \item Accuracy (train data): $0.973$
+                \item Accuracy (test data): $0.962$
+                \item Training Time: TODO
+            \end{itemize}
+        \end{columns}
+    \end{frame}
+       \begin{frame}
+        \frametitle{Results with FGD}
+        We trained the reference model for $300$ iterations with a learning rate of $\eta_k = 0.5$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
+        \begin{columns}
+            \column{0.5\paperwidth}
+            \centering
+            \includegraphics[width=\linewidth]{confusion-matrix-fgd-final-model.png}
+
+            \column{0.5\paperwidth}
+            \centering
+            \begin{itemize}
+                \item Accuracy (train data): $0.934$
+                \item Accuracy (test data): $0.929$
+                \item Training Time: TODO
+            \end{itemize}
+        \end{columns}
+    \end{frame}
+    \begin{frame}
+        \frametitle{Convergence Comparison}
+        \begin{columns}[T]
+            \column{0.5\paperwidth}
+            \centering
+            \includegraphics[width=\linewidth]{objective-value-vs-epoch.png}
+
+            \column{0.5\paperwidth}
+            \centering
+            \includegraphics[width=\linewidth]{optimality-gap-vs-epoch.png}
+        \end{columns}
     \end{frame}
 
 

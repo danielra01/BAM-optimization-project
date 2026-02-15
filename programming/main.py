@@ -9,20 +9,20 @@ from full_gd import GDConfig, train_full_gd
 
 
 def main() -> None:
-    data = load_data(train_size=0.7, random_state=0)
+    data = load_data(train_size=0.7, random_state=2)
 
     # Keep regularization consistent to compare
     l2_reg = 1e-4
 
     # SGD training
-    model_sgd = init_model(seed=1)
+    model_sgd = init_model(seed=2)
     sgd_cfg = SGDConfig(
         learning_rate=0.5,
         epochs=50,
         batch_size=64,
         l2_reg=l2_reg,
         shuffle=True,
-        seed=0,
+        seed=2,
     )
     sgd_hist = train_sgd(model_sgd, data.images_train, data.labels_train,
                          sgd_cfg)
@@ -41,7 +41,7 @@ def main() -> None:
     # Full-batch GD training
     model_gd = init_model(seed=2)
     gd_cfg = GDConfig(
-        learning_rate=0.2,
+        learning_rate=0.5,
         iterations=300,
         l2_reg=l2_reg,
     )
@@ -71,6 +71,10 @@ def main() -> None:
     # Confusion matrix (SGD final model)
     ConfusionMatrixDisplay.from_predictions(data.labels_test, pred_test_sgd)
     plt.title("Confusion matrix (SGD final model)")
+
+    # Confusion matrix (FGD final model)
+    ConfusionMatrixDisplay.from_predictions(data.labels_test, pred_test_gd)
+    plt.title("Confusion matrix (FGD final model)")
 
     # Objective vs epoch/iteration
     plt.figure()
