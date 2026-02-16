@@ -208,6 +208,66 @@ from sklearn.datasets import load_digits
             \item Gradient can be to noisy if $B$ is too small
         \end{itemize}
     \end{frame}
+    \begin{frame}[fragile]
+    \frametitle{SGD Implementation (Mini-batch) --- I}
+    \small
+    \textbf{Finite-sum objective (training set).}\;
+    \[
+    f_\lambda(W,b)
+    =
+    \frac{1}{N}\sum_{j=1}^{N} L\!\big(y_j,\; a_j^\top W + b\big)
+    +\frac{\lambda}{2}\,\|W\|_F^2,
+    \qquad
+    W\in\mathbb{R}^{64\times 10},\; b\in\mathbb{R}^{10}.
+    \]
+
+    \vspace{0.15cm}
+    \textbf{Mini-batch gradient and update.}\;
+    For a mini-batch $\mathcal{B}_k$ of size $B$,
+    \[
+    g_W^k=\frac{1}{B}\sum_{j\in\mathcal{B}_k}\nabla_W L_j(W^k,b^k) + \lambda W^k,
+    \qquad
+    g_b^k=\frac{1}{B}\sum_{j\in\mathcal{B}_k}\nabla_b L_j(W^k,b^k),
+    \]
+    \[
+    W^{k+1}=W^k-\eta\, g_W^k,
+    \qquad
+    b^{k+1}=b^k-\eta\, g_b^k.
+    \]
+
+    \vspace{0.15cm}
+    \textbf{Practical details.}
+    \begin{itemize}
+        \item \emph{Epoch shuffle:} permute training indices before forming mini-batches.
+        \item \emph{Reproducibility:} fix seeds for initialization and epoch shuffling.
+    \end{itemize}
+    \end{frame}
+    \begin{frame}[fragile]
+    \frametitle{SGD Implementation (Mini-batch) --- II}
+
+    \small
+    \textbf{Numerical stability (softmax).}\;
+    Given scores $S\in\mathbb{R}^{B\times 10}$, we compute
+    \[
+    \operatorname{softmax}(S)_{i\ell}
+    =
+    \frac{\exp\big(S_{i\ell}-m_i\big)}{\sum_{r=0}^{9}\exp\big(S_{ir}-m_i\big)},
+    \qquad
+    m_i=\max_{0\le r\le 9} S_{ir},
+    \]
+    which avoids overflow in $\exp(\cdot)$.
+
+    \vspace{0.2cm}
+    \textbf{Pseudo-code (one epoch).}
+    \begin{lstlisting}[language=Python]
+    perm = rng.permutation(N)
+    for start in range(0, N, B):
+        idx = perm[start:start+B]
+        dW, db = gradients(W, b, A[idx], y[idx], l2_reg=lambda_)
+        W -= eta * dW
+        b -= eta * db
+    \end{lstlisting}
+    \end{frame}
     \begin{frame}
         \frametitle{Results with SGD}
         We trained the model for $50$ epochs with a mini-batch size of $B=64$ and a learning rate of $\eta_k = 1$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
