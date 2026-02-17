@@ -1,334 +1,197 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from sklearn.metrics import classification_report, ConfusionMatrixDisplay
-import time
+from sklearn.metrics import classification_report
 
 from data import load_data
-from model import init_model, predict
-from sgd import SGDConfig, train_sgd, accuracy
-from full_gd import GDConfig, train_full_gd
+from experiments import (
+    sweep_sgd_l2, sweep_sgd_lr, sweep_sgd_batch,
+    sweep_gd_lr,
+    pick_best,
+    train_final_sgd, train_final_gd,
+    reference_f_star_fixed_gd,
+)
+from plots import (
+    plot_objective_curves, plot_metric_vs_param, plot_val_acc_vs_time,
+    plot_confusion, plot_compare_objective_and_gap,
+)
 
 
 def main() -> None:
-    data = load_data(train_size=0.7, random_state=2)
+    # Data
+    data = load_data(train_size=0.7, val_size=0.15, test_size=0.15, random_state=2)
 
-    # SGD training
-    learning_rates = [0.05, 0.1, 0.2, 1.0, 2.0]
-    epochs = 50
-    batch_size = 64
+    # Global experiment settings
+    seed = 2
+
+    max_epochs = 1000
+    eval_every = 5
+    target_loss = 0.96 # None same time budget
+
+    # Grids
+    reg_values = [0.0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
+    learning_rates = [0.05, 0.1, 0.2, 0.5, 1.0]
+    batch_sizes = [8, 16, 32, 64, 128, 256]
 
     baseline_lr = 0.5
-    reg_values = [0.0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
+    baseline_B = 64
 
-    # Tune l2_reg with fixed baseline learning rate
-    sgd_reg_runs = []
+    # 1) Tune l2 (SGD)
+    sgd_l2_runs = sweep_sgd_l2(
+        data, reg_values,
+        baseline_lr=baseline_lr,
+        baseline_B=baseline_B,
+        seed=seed,
+        max_epochs=max_epochs,
+        eval_every=eval_every,
+        target_loss=target_loss,
+    )
+    best_l2_run = pick_best(sgd_l2_runs, key="val_acc")
+    best_l2 = float(best_l2_run.params["l2"])
 
-    for lam in reg_values:
-        model_reg = init_model(seed=2)
+    plot_objective_curves(
+        sgd_l2_runs,
+        title=f"SGD: objective vs logged steps (varying l2, lr={baseline_lr:g}, B={baseline_B})",
+        label_fn=lambda r: ("no reg" if r.params["l2"] == 0.0 else f"l2={r.params['l2']:g}"),
+    )
+    plot_metric_vs_param(
+        sgd_l2_runs,
+        param_key="l2",
+        metric_key="val_acc",
+        title=f"SGD: val_acc vs l2 (lr={baseline_lr:g}, B={baseline_B})",
+        xlabel=r"$\lambda$",
+        ylabel="Validation accuracy",
+        logx=True,
+    )
 
-        cfg_reg = SGDConfig(
-            learning_rate=baseline_lr,
-            epochs=epochs,
-            batch_size=batch_size,
-            l2_reg=lam,
-            shuffle=True,
-            seed=2,
-        )
+    # 2) Tune lr (SGD)
+    sgd_lr_runs = sweep_sgd_lr(
+        data, learning_rates,
+        l2_reg=best_l2,
+        baseline_B=baseline_B,
+        seed=seed,
+        max_epochs=max_epochs,
+        eval_every=eval_every,
+        target_loss=target_loss,
+    )
+    best_lr_run = pick_best(sgd_lr_runs, key="val_acc")
+    best_lr = float(best_lr_run.params["lr"])
 
-        t0 = time.perf_counter()
-        hist_reg = train_sgd(model_reg, data.images_train, data.labels_train, cfg_reg)
-        t1 = time.perf_counter()
+    plot_val_acc_vs_time(
+        sgd_lr_runs,
+        title=f"SGD: val_acc vs time (l2={best_l2:g}, B={baseline_B})",
+        label_fn=lambda r: f"lr={r.params['lr']:g}",
+    )
 
-        pred_test_reg = predict(model_reg, data.images_test)
+    # 3) Tune batch size (SGD)
+    sgd_B_runs = sweep_sgd_batch(
+        data, batch_sizes,
+        l2_reg=best_l2,
+        learning_rate=best_lr,
+        seed=seed,
+        max_epochs=max_epochs,
+        eval_every=eval_every,
+        target_loss=target_loss,
+    )
+    best_B_run = pick_best(sgd_B_runs, key="val_acc")
+    best_B = int(best_B_run.params["B"])
 
-        sgd_reg_runs.append({
-            "l2": lam,
-            "model": model_reg,
-            "hist": hist_reg,
-            "time": t1 - t0,
-            "train_obj": float(hist_reg.train_loss[-1]),
-            "test_acc": float(accuracy(pred_test_reg, data.labels_test)),
-        })
+    plot_metric_vs_param(
+        sgd_B_runs,
+        param_key="B",
+        metric_key="val_acc",
+        title=f"SGD: val_acc vs batch size (l2={best_l2:g}, lr={best_lr:g})",
+        xlabel="Batch size B",
+        ylabel="Validation accuracy",
+        logx=True,
+    )
 
-        tag = "no-reg" if lam == 0.0 else f"l2={lam:g}"
-        print(f"=== SGD (baseline lr={baseline_lr:g}, {tag}) ===")
-        print("Final train objective:", sgd_reg_runs[-1]["train_obj"])
-        print("Test accuracy:", sgd_reg_runs[-1]["test_acc"])
-        print("Training time: {:.2f} seconds".format(sgd_reg_runs[-1]["time"]))
-        print()
-
-    # choose best l2_reg by test accuracy
-    best_reg = max(sgd_reg_runs, key=lambda r: r["test_acc"])
-    best_l2 = best_reg["l2"]
-
-    print("=== Best l2_reg (with baseline lr) ===")
-    print(f"Chosen l2_reg={best_l2:g} (baseline lr={baseline_lr:g})")
+    # 4) FINAL SGD (train+val) -> test
+    final_sgd = train_final_sgd(
+        data,
+        l2_reg=best_l2,
+        learning_rate=best_lr,
+        batch_size=best_B,
+        seed=seed,
+        max_epochs=max_epochs,
+        eval_every=eval_every,
+        target_loss=None,
+    )
+    print("=== FINAL SGD ===")
+    print(final_sgd.params)
+    print("Train objective:", final_sgd.train_obj)
+    print("Train acc:", final_sgd.train_acc)
+    print("Test acc:", final_sgd.test_acc)
+    print("Classification report (SGD final, test):")
+    print(classification_report(data.labels_test, final_sgd.pred_test))
     print()
 
-    # Plot: objective vs epochs for different l2_reg (baseline lr)
-    plt.figure()
-    for r in sgd_reg_runs:
-        y = np.asarray(r["hist"].train_loss, dtype=float)
-        x = np.arange(len(y))
-        label = "no reg" if r["l2"] == 0.0 else f"l2={r['l2']:g}"
-        plt.plot(x, y, label=label)
-    plt.xlabel("Epochs")
-    plt.ylabel("Objective value")
-    plt.title(f"SGD: objective vs epochs, varying $\\ell_2$ (lr={baseline_lr:g})")
-    plt.legend()
-
-    # Plot: test accuracy vs l2_reg (baseline lr)
-    plt.figure()
-    xs = np.asarray([r["l2"] for r in sgd_reg_runs], dtype=float)
-    ys = np.asarray([r["test_acc"] for r in sgd_reg_runs], dtype=float)
-    xs_plot = xs.copy()
-    xs_plot[xs_plot == 0.0] = 1e-18
-    plt.semilogx(xs_plot, ys, marker="o")
-    plt.xlabel(r"$\lambda$")
-    plt.ylabel("Test accuracy")
-    plt.title(f"SGD: test accuracy vs $\\lambda$ (lr={baseline_lr:g})")
-
-    l2_reg = best_l2
-
-    sgd_runs = []  # store dicts with results per lr
-
-    for i, lr in enumerate(learning_rates):
-        model_sgd = init_model(seed=2)
-
-        sgd_cfg = SGDConfig(
-            learning_rate=lr,
-            epochs=epochs,
-            batch_size=batch_size,
-            l2_reg=l2_reg,
-            shuffle=True,
-            seed=2,
-        )
-
-        t0 = time.perf_counter()
-        hist = train_sgd(model_sgd, data.images_train,
-                         data.labels_train, sgd_cfg)
-        t1 = time.perf_counter()
-
-        pred_train = predict(model_sgd, data.images_train)
-        pred_test = predict(model_sgd, data.images_test)
-
-        run = {
-            "lr": lr,
-            "model": model_sgd,
-            "hist": hist,
-            "time": t1 - t0,
-            "train_obj": float(hist.train_loss[-1]),
-            "train_acc": float(accuracy(pred_train, data.labels_train)),
-            "test_acc": float(accuracy(pred_test, data.labels_test)),
-            "pred_test": pred_test,
-        }
-        sgd_runs.append(run)
-
-        print(f"=== SGD (lr={lr:g}) ===")
-        print("Final train objective:", run["train_obj"])
-        print("Train accuracy:", run["train_acc"])
-        print("Test accuracy:", run["test_acc"])
-        print("SGD training time: {:.2f} seconds".format(run["time"]))
-        print()
-
-    # Best test accuracy
-    best = max(sgd_runs, key=lambda r: r["test_acc"])
-
-    print("=== Best SGD run ===")
-    print(f"Chosen lr={best['lr']:g} (by test accuracy)")
-    print("Classification report (SGD, test):")
-    print(classification_report(data.labels_test, best["pred_test"]))
-
-    # SGD learning-rate comparison (objective)
-    plt.figure()
-    for r in sgd_runs:
-        y = np.asarray(r["hist"].train_loss, dtype=float)
-        x = np.arange(len(y))
-        plt.plot(x, y, label=f"SGD lr={r['lr']:g}")
-    plt.xlabel("Epochs")
-    plt.ylabel("Objective value")
-    plt.title("SGD: objective vs epochs for different learning rates")
-    plt.legend()
-
-    # SGD learning-rate comparison (gap w.r.t. best SGD final value)
-    plt.figure()
-    sgd_best_final = float(np.min([float(np.min(np.asarray(
-        r["hist"].train_loss, dtype=float)))
-        for r in sgd_runs if len(r["hist"].train_loss) > 0]))
-    for r in sgd_runs:
-        sgd_obj = np.asarray(r["hist"].train_loss, dtype=float)
-        gap = np.maximum(sgd_obj - sgd_best_final, 0.0)
-        x = np.arange(len(gap))
-        plt.plot(x, gap + 1e-16, label=f"SGD lr={r['lr']:g}")
-        plt.yscale("log")
-    plt.xlabel("Epochs")
-    plt.ylabel(r"$f(x_k)-\min f$")
-    plt.title("SGD: relative gap vs epochs (log scale)")
-    plt.legend()
-
-    # SGD: sweep over batch_size (mini-batches)
-    batch_sizes = [1, 8, 16, 32, 64, 128, 256]
-
-    # Fix hyperparameters to isolate the effect of batch size
-    fixed_lr = best["lr"]
-    fixed_l2 = l2_reg
-    fixed_epochs = epochs
-
-    sgd_batch_runs = []
-
-    for B in batch_sizes:
-        model_b = init_model(seed=2)
-
-        cfg_b = SGDConfig(
-            learning_rate=fixed_lr,
-            epochs=fixed_epochs,
-            batch_size=B,
-            l2_reg=fixed_l2,
-            shuffle=True,
-            seed=2,
-        )
-
-        t0 = time.perf_counter()
-        hist_b = train_sgd(model_b, data.images_train, data.labels_train, cfg_b)
-        t1 = time.perf_counter()
-
-        pred_test_b = predict(model_b, data.images_test)
-
-        sgd_batch_runs.append({
-            "B": B,
-            "hist": hist_b,
-            "time": t1 - t0,
-            "test_acc": float(accuracy(pred_test_b, data.labels_test)),
-        })
-
-        print(f"=== SGD (lr={fixed_lr:g}, l2={fixed_l2:g}, batch_size={B}) ===")
-        print("Final train objective:", float(hist_b.train_loss[-1]))
-        print("Test accuracy:", sgd_batch_runs[-1]["test_acc"])
-        print("Training time: {:.2f} seconds".format(sgd_batch_runs[-1]["time"]))
-        print()
-
-    # Plot 1: objective vs epochs (different batch sizes)
-    plt.figure()
-    for r in sgd_batch_runs:
-        y = np.asarray(r["hist"].train_loss, dtype=float)
-        x = np.arange(len(y))
-        plt.plot(x, y, label=f"B={r['B']}")
-    plt.xlabel("Epochs")
-    plt.ylabel("Objective value")
-    plt.title(f"SGD: objective vs epochs for different batch sizes (lr={fixed_lr:g}, l2={fixed_l2:g})")
-    plt.legend()
-
-    # Plot 2: test accuracy vs batch size (log-x)
-    plt.figure()
-    xs = np.asarray([r["B"] for r in sgd_batch_runs], dtype=float)
-    ys = np.asarray([r["test_acc"] for r in sgd_batch_runs], dtype=float)
-    plt.semilogx(xs, ys, marker="o")
-    plt.xlabel("Batch size B")
-    plt.ylabel("Test accuracy")
-    plt.title(f"SGD: test accuracy vs batch size (lr={fixed_lr:g}, l2={fixed_l2:g})")
-
-    # Plot 3: time vs batch size (log-x)
-    plt.figure()
-    ts = np.asarray([r["time"] for r in sgd_batch_runs], dtype=float)
-    plt.semilogx(xs, ts, marker="o")
-    plt.xlabel("Batch size B")
-    plt.ylabel("Training time (seconds)")
-    plt.title(f"SGD: time vs batch size (lr={fixed_lr:g}, l2={fixed_l2:g})")
-
-    # Full-batch GD training
+    # 5) Tune lr (GD) using same l2 (compare under same regularization)
     gd_learning_rates = [0.05, 0.1, 0.2, 0.5, 1.0]
-    gd_iterations = 300
+    gd_iters = 1000
 
-    gd_runs = []
+    gd_lr_runs = sweep_gd_lr(
+        data, gd_learning_rates,
+        l2_reg=best_l2,
+        seed=seed,
+        max_iters=gd_iters,
+    )
+    best_gd_run = pick_best(gd_lr_runs, key="val_acc")
+    best_gd_lr = float(best_gd_run.params["lr"])
 
-    for lr in gd_learning_rates:
-        model_gd = init_model(seed=2)
+    plot_val_acc_vs_time(
+        gd_lr_runs,
+        title=f"Full-GD: val_acc vs time (l2={best_l2:g})",
+        label_fn=lambda r: f"lr={r.params['lr']:g}",
+    )
 
-        gd_cfg = GDConfig(
-            learning_rate=lr,
-            iterations=gd_iterations,
-            l2_reg=l2_reg,
-        )
-
-        t0 = time.perf_counter()
-        hist = train_full_gd(model_gd, data.images_train, data.labels_train, gd_cfg)
-        t1 = time.perf_counter()
-
-        pred_train = predict(model_gd, data.images_train)
-        pred_test = predict(model_gd, data.images_test)
-
-        run = {
-            "lr": lr,
-            "model": model_gd,
-            "hist": hist,
-            "time": t1 - t0,
-            "train_obj": float(hist.train_loss[-1]),
-            "train_acc": float(accuracy(pred_train, data.labels_train)),
-            "test_acc": float(accuracy(pred_test, data.labels_test)),
-            "pred_test": pred_test,
-        }
-        gd_runs.append(run)
-
-        print(f"=== Full-GD (lr={lr:g}) ===")
-        print("Final train objective:", run["train_obj"])
-        print("Train accuracy:", run["train_acc"])
-        print("Test accuracy:", run["test_acc"])
-        print("Full-GD training time: {:.2f} seconds".format(run["time"]))
-        print()
-
-    # Best GD run (by test accuracy)
-    best_gd = max(gd_runs, key=lambda r: r["test_acc"])
-
-    print("=== Best Full-GD run ===")
-    print(f"Chosen lr={best_gd['lr']:g} (by test accuracy)")
-    print("Classification report (Full-GD best, test):")
-    print(classification_report(data.labels_test, best_gd["pred_test"]))
-
-    # Collect objectives
-    sgd_objs = [(r["lr"], np.asarray(r["hist"].train_loss, dtype=float)) for r in sgd_runs]
-    gd_objs = [(r["lr"], np.asarray(r["hist"].train_loss, dtype=float)) for r in gd_runs]
-
-    # Reference value: best objective reached among all Full-GD runs
-    f_star = float(np.min([np.min(obj) for _, obj in gd_objs]))
-
-    # Confusion matrix (SGD final model)
-    ConfusionMatrixDisplay.from_predictions(data.labels_test,
-                                            best["pred_test"])
-    plt.title(f"Confusion matrix (SGD best lr={best['lr']:g})")
-
-    # Confusion matrix (FGD final model)
-    ConfusionMatrixDisplay.from_predictions(data.labels_test,
-                                            best_gd["pred_test"])
-    plt.title(f"Confusion matrix (Full-GD best lr={best_gd['lr']:g})")
-
-    # Objective vs data passes (epochs)
+    from matplotlib import pyplot as plt
     plt.figure()
-    for lr, obj in gd_objs:
-        x = np.arange(len(obj))
-        plt.plot(x, obj, label=f"Full-GD lr={lr:g}")
-
-    for lr, obj in sgd_objs:
-        x = np.arange(len(obj))
-        plt.plot(x, obj, label=f"SGD lr={lr:g}")
-    plt.xlabel("Data passes (epochs)")
-    plt.ylabel("Objective value")
-    plt.title("Objective value vs data passes")
+    plt.plot(best_lr_run.hist.time_points, best_lr_run.hist.val_acc, label=f"SGD best lr={best_lr:g}")
+    plt.plot(best_gd_run.hist.time_points, best_gd_run.hist.val_acc, label=f"GD best lr={best_gd_lr:g}")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Validation accuracy")
+    plt.title("Validation accuracy vs time: SGD(best) vs Full-GD(best)")
     plt.legend()
 
-    # Optimality gap vs data passes (epochs) on a log scale
-    plt.figure()
-    for lr, obj in gd_objs:
-        gap = np.maximum(obj - f_star, 0.0)
-        x = np.arange(len(gap))
-        plt.semilogy(x, gap + 1e-16, label=f"Full-GD lr={lr:g}")
-    for lr, obj in sgd_objs:
-        gap = np.maximum(obj - f_star, 0.0)
-        x = np.arange(len(gap))
-        plt.semilogy(x, gap + 1e-16, label=f"SGD lr={lr:g}")
-    plt.xlabel("Data passes (epochs)")
-    plt.ylabel(r"$f(x_k) - f^\star$")
-    plt.title("Optimality gap vs data passes (log scale)")
-    plt.legend()
+    # 6) FINAL GD (train+val) -> test
+    final_gd = train_final_gd(
+        data,
+        l2_reg=best_l2,
+        learning_rate=best_gd_lr,
+        seed=seed,
+        max_iters=gd_iters,
+    )
+    print("=== FINAL Full-GD ===")
+    print(final_gd.params)
+    print("Train objective:", final_gd.train_obj)
+    print("Train acc:", final_gd.train_acc)
+    print("Test acc:", final_gd.test_acc)
+    print("Classification report (Full-GD final, test):")
+    print(classification_report(data.labels_test, final_gd.pred_test))
+    print()
+
+    # Confusion matrices
+    plot_confusion(data.labels_test, final_sgd.pred_test, title="Confusion matrix (SGD final, test)")
+    plot_confusion(data.labels_test, final_gd.pred_test, title="Confusion matrix (Full-GD final, test)")
+
+    X_ref = np.vstack([data.images_train, data.images_val])
+    y_ref = np.concatenate([data.labels_train, data.labels_val])
+
+    f_star_ref = reference_f_star_fixed_gd(
+        X_ref, y_ref,
+        l2=best_l2,
+        lr=0.05,
+        max_iters=50000
+    )
+    print("Reference f* (GD fixed-step):", f_star_ref)
+
+    # Final comparison: objective + gap vs data passes
+    plot_compare_objective_and_gap(
+        final_sgd.hist.train_loss,
+        final_gd.hist.train_loss,
+        eval_every_sgd=eval_every,
+        title_prefix="Final runs (train+val)",
+        f_star=f_star_ref,
+    )
 
     plt.show()
 
