@@ -1,44 +1,42 @@
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+import numpy as np
 from dataclasses import dataclass
 from typing import Optional
-
-import numpy as np
-from sklearn.datasets import load_digits
-
 
 @dataclass
 class ImageData:
     images_train: np.ndarray
+    images_val: np.ndarray
     images_test: np.ndarray
     labels_train: np.ndarray
+    labels_val: np.ndarray
+    labels_test: np.ndarray
     count: int
-    labels_test: Optional[np.ndarray] = None
 
-
-def load_data(train_size: float = 0.7, random_state: int = 0) -> ImageData:
+def load_data(train_size=0.7, val_size=0.15, test_size=0.15, random_state=0) -> ImageData:
     digits = load_digits()
-    images = digits.data / 16  # shape (1797, 64)
-    labels = digits.target  # shape (1797,)
-    count = len(images)
+    X = digits.data / 16.0
+    y = digits.target
+    n = len(X)
 
-    # We want to shuffle the data because otherwise the training set always
-    # contains the same digits and the test set contains the same digits,
-    # which is not good for training and testing.
-    np.random.seed(random_state)
-    indices = np.random.permutation(count)
-    images = images[indices]
-    labels = labels[indices]
-
-    # Split into training and test sets with the given proportions
-    split_index = int(count * train_size)
-    images_train = images[:split_index]
-    labels_train = labels[:split_index]
-    images_test = images[split_index:]
-    labels_test = labels[split_index:]
-
-    return ImageData(
-        images_train=images_train,
-        images_test=images_test,
-        labels_train=labels_train,
-        labels_test=labels_test,
-        count=count
+    # split train vs temp (val+test)
+    X_train, X_temp, y_train, y_temp = train_test_split(
+        X, y,
+        train_size=train_size,
+        random_state=random_state,
+        shuffle=True,
+        stratify=y
     )
+
+    # split temp into val vs test
+    test_ratio_within_temp = val_size / (test_size + val_size)
+    X_val, X_test, y_val, y_test = train_test_split(
+        X_temp, y_temp,
+        test_size=test_ratio_within_temp,
+        random_state=random_state,
+        shuffle=True,
+        stratify=y_temp
+    )
+
+    return ImageData(X_train, X_val, X_test, y_train, y_val, y_test, n)
