@@ -2,7 +2,7 @@ from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 import numpy as np
 from dataclasses import dataclass
-from typing import Optional
+
 
 @dataclass
 class ImageData:
@@ -14,7 +14,17 @@ class ImageData:
     labels_test: np.ndarray
     count: int
 
-def load_data(train_size=0.7, val_size=0.15, test_size=0.15, random_state=0) -> ImageData:
+
+def load_data(train_size=0.7, val_size=0.15, test_size=0.15,
+              random_state=0) -> ImageData:
+    # Basic validations
+    if train_size <= 0 or val_size <= 0 or test_size <= 0:
+        raise ValueError("train_size, val_size and test_size must be > 0.")
+
+    total = train_size + val_size + test_size
+    if not np.isclose(total, 1.0):
+        raise ValueError(f"sizes must sum to 1.0 (got {total}).")
+
     digits = load_digits()
     X = digits.data / 16.0
     y = digits.target
@@ -30,7 +40,7 @@ def load_data(train_size=0.7, val_size=0.15, test_size=0.15, random_state=0) -> 
     )
 
     # split temp into val vs test
-    test_ratio_within_temp = val_size / (test_size + val_size)
+    test_ratio_within_temp = test_size / (test_size + val_size)
     X_val, X_test, y_val, y_test = train_test_split(
         X_temp, y_temp,
         test_size=test_ratio_within_temp,
