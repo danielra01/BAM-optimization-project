@@ -12,8 +12,8 @@ class Model:
 
 def init_model(image_dim: int = 64, num_classes: int = 10,
                seed: int = 0) -> Model:
-    np.random.seed(seed)
-    w = np.random.randn(image_dim, num_classes)
+    rng = np.random.default_rng(seed)
+    w = rng.standard_normal((image_dim, num_classes))
     # Keep bises at zero for now, since I dont have a good intuition for how
     # to initialize them and they can be learned during training anywy
     b = np.zeros(num_classes, dtype=np.float64)
