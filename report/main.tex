@@ -21,6 +21,7 @@
 \AtBeginEnvironment{proof}{\vspace*{-2\parskip}} % Avoid big space at begin of proof
 
 % Nice Referencing
+\usepackage{xurl} % For nice url formatting
 \usepackage{hyperref} % Se hypersetup below
 \urlstyle{same}
 \usepackage[noabbrev]{cleveref}
@@ -101,7 +102,8 @@
 backend=biber,
 style=alphabetic,
 maxnames=10,
-maxalphanames=10]{biblatex}
+maxalphanames=10,
+url=true]{biblatex}
 \addbibresource{./bibliography.bib}
 
 % TODO functionality:
