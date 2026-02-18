@@ -2,7 +2,7 @@
 In the previous section we formulated the training of the multi-class logistic regression model as the finite-sum optimization problem
 \begin{align}
 \label{eq:sgd_intro_problem}
-\min_{x\in(\mathbb{R}^{64}\times \mathbb{R})^{10}} 
+\underset{x\in(\mathbb{R}^{64}\times \mathbb{R})^{10}}{\text{minimize }} 
 f(x)
 :=
 \frac{1}{N}\sum_{j=1}^N f_j(x),
@@ -19,6 +19,7 @@ The gradient of \cref{eq:sgd_intro_problem} decomposes as
 \nabla f(x)=\frac{1}{N}\sum_{j=1}^N \nabla f_j(x).
 \end{align}
 This admits several gradient-based strategies whose performance is governed by the trade-off between \emph{per-iteration cost} and the \emph{quality} of the search direction.
+
 \noindent\textbf{Deterministic first-order method: full-batch gradient descent.}
 Full-batch gradient descent uses the exact gradient \cref{eq:grad_decomp}:
 \begin{align}
