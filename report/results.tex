@@ -1,0 +1,50 @@
+\section{Results and Discussion}
+In this section we present some of the results of our experiments and discuss their implications. We focus on the comparison between full-batch gradient descent (FGD) and stochastic gradient descent (SGD) in terms of convergence behavior and computational efficiency. Also we analyze the effects of different hyperparameters, such as the learning rate, the mini-batch size and the $L^2$ regularization parameter on the performance of SGD.
+
+In order to measure our performance we split the data into three different randomly chosen subsets: a training set, a validation set and a test set.\TODO{Add percentages of these different sets} The training set is used to compute the gradients and update the parameters of our model during the training phase, the validation set is used to tune the hyperparameters and to monitor the performance during training, and the test set is used to evaluate the final performance of our model after training.
+
+\subsection{Hyperparameter tuning}\;\\
+In order to find good hyperparameters for our models, we followed the approach to tune them seperately on the validation set. We are aware that this approach is not optimal, since the hyperparameters are not independent of each other and therefore it would be better to tune them jointly, e.g. by doing a grid search over the hyperparameter space. \TODO{Is this true?}
+\subsubsection{$L^2$ regularization}\;\\
+\TODO{First was $L^2$ reg but why this order?}
+\subsubsection{Learning rate}\;\\
+Compare different leaning rates for both FGD and SGD:
+\begin{figure}[ht]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.5\textwidth]{../presentation/objective-value-vs-epoch.png} &
+        \includegraphics[width=0.5\textwidth]{../presentation/optimality-gap-vs-epoch.png}
+    \label{fig:learning_rate_tuning}
+    \end{tabular}
+    \caption{Objective value and optimality gap vs. epoch for different learning rates}
+\end{figure}
+\subsubsection{Batch size}
+
+
+
+\subsection{Final models and discussion}\;\\
+Finally, we want to compare both our best final models, i.e. our models that achieved the best accuracy on the validation set. We can see that both our models perform fairly well on the test sets, by looking at the confusion matrices (\cref{fig:confusion_matrices}).
+\begin{figure}[ht]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.5\textwidth]{plots/confusion-sgd.png} &
+        \includegraphics[width=0.5\textwidth]{plots/confusion-fgd.png}
+    \end{tabular}
+    \caption{Confusion matrices for SGD and FGD on the test set}
+    \label{fig:confusion_matrices}
+\end{figure}
+
+
+Although both models perform very well, the SGD model converges much faster than the FGD model (cf. \cref{fig:accuracy_vs_epoch}), which is a common observation in practice.
+\begin{figure}[ht]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.5\textwidth]{plots/final-run-obejctiv-vs-data-passes.png} &
+        \includegraphics[width=0.5\textwidth]{plots/final-run-optimalitygap-vs-data-passes.png}
+    \end{tabular}
+    \caption{Objective value and optimality gap vs. data passes for SGD and FGD on the validation set}
+    \label{fig:accuracy_vs_epoch}
+\end{figure}
+This is because SGD updates more often and can therefore make faster progress in the early stages of training, while FGD requires more time to compute the full gradient and update the parameters. However, FGD can achieve a better and more consistent final accuracy than SGD if we allow it to run for enough epochs, since it uses the exact gradient and can therefore make more consistent progress towards the optimal solution. This can be seen very well in the optimality gap plot, since it has a log scale and therefore the oscillations of SGD are visible.
+
+Overall, the choice between FGD and SGD depends on the specific problem and the computational resources available. For large datasets and limited computational resources SGD is often the only choice because FGD would take to much resources.
