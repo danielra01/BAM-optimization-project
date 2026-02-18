@@ -12,8 +12,8 @@ class Model:
 
 def init_model(image_dim: int = 64, num_classes: int = 10,
                seed: int = 0) -> Model:
-    np.random.seed(seed)
-    w = np.random.randn(image_dim, num_classes)
+    rng = np.random.default_rng(seed)
+    w = rng.standard_normal((image_dim, num_classes))
     # Keep bises at zero for now, since I dont have a good intuition for how
     # to initialize them and they can be learned during training anywy
     b = np.zeros(num_classes, dtype=np.float64)
@@ -24,11 +24,15 @@ def scores(model: Model, images: np.ndarray) -> np.ndarray:
     return images @ model.weights + model.biases
 
 
+def logsumexp(a: np.ndarray, axis: int = 1) -> np.ndarray:
+    a_max = np.max(a, axis=axis, keepdims=True)
+    return np.squeeze(a_max, axis=axis) + np.log(np.sum(np.exp(a - a_max), axis=axis))
+
+
 def loss(scores: np.ndarray, labels: np.ndarray) -> float:
-    log_sum_exp = np.log(np.sum(np.exp(scores), axis=1))
-    # THis should be the same as using sum with one hot vectors
-    ps = scores[np.arange(labels.size), labels]
-    return np.mean(log_sum_exp - ps)
+    lse = logsumexp(scores, axis=1)
+    correct = scores[np.arange(labels.size), labels]
+    return float(np.mean(lse - correct))
 
 
 def softmax(scores: np.ndarray) -> np.ndarray:
@@ -45,7 +49,7 @@ def gradients(model: Model, images: np.ndarray, labels: np.ndarray,
     s = scores(model, images)
     probs = softmax(s)
 
-    ds = probs
+    ds = probs.copy()
     ds[np.arange(batch_size), labels] -= 1.0
     ds /= batch_size
 
