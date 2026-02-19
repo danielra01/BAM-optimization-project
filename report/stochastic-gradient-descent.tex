@@ -20,7 +20,7 @@ The gradient of \cref{eq:sgd_intro_problem} decomposes as
 \end{align}
 This admits several gradient-based strategies whose performance is governed by the trade-off between \emph{per-iteration cost} and the \emph{quality} of the search direction.
 
-\noindent\textbf{Deterministic first-order method: full-batch gradient descent.}
+\subsubsection{Deterministic first-order method: full-batch gradient descent.}\;\\
 Full-batch gradient descent uses the exact gradient \cref{eq:grad_decomp}:
 \begin{align}
 \label{eq:gd}
@@ -35,7 +35,7 @@ As a consequence, while the method is sample-efficient (each update uses all ava
 A second practical issue is that the method can be sensitive to ill-conditioning: when the problem is poorly conditioned, the step size required for stability can be small, leading to slow progress unless one uses preconditioning or curvature information (e.g.\ quasi-Newton methods).
 
 \medskip
-\noindent\textbf{Stochastic first-order methods (SGD and mini-batches).}
+\subsubsection{Stochastic first-order methods (SGD and mini-batches).}\;\\
 SGD replaces $\nabla f(x^k)$ by a stochastic estimator computed from a mini-batch $\mathcal{B}_k$ of size $B$:
 \begin{align}
 \label{eq:minibatch}
