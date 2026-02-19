@@ -1,0 +1,120 @@
+\section{Implementation}
+\label{sec:implementation}
+
+This section describes the software organization and training pipeline used to solve the handwritten digit classification task. The mathematical formulation of the model, loss function, and gradients is given in Section~\ref{sec:mathematical-background}. Here we focus on the code structure, data processing, optimization routines (SGD and full-batch GD), and the experimental setup used for hyperparameter tuning and evaluation.
+
+
+\subsection{Code structure}\;\\
+The implementation is split into the following files:
+\begin{itemize}
+    \item \emph{data.py}: dataset loading, normalization, and train/validation/test splitting.
+    \item \emph{model.py}: model definition (weights/biases), numerically stable softmax and loss, and analytical gradients.
+    \item \emph{sgd.py}: mini-batch SGD routine, logging, and threshold-based early stopping.
+    \item \emph{full\_gd.py}: full-batch gradient descent baseline with the same objective.
+    \item \emph{metrics.py}: accuracy and auxiliary timing utilities.
+    \item \emph{experiments.py}: hyperparameter sweeps (L2, learning rate, batch size), selection of best run, and final training.
+    \item \emph{plots.py}: plotting utilities for objectives, validation accuracy, confusion matrices, and optimality gaps.
+    \item \emph{main.py}: orchestration script running the full experimental pipeline and producing figures/reports.
+\end{itemize}
+
+
+\subsection{Data pipeline}\;\\
+We use \emph{sklearn.datasets.load\_digits}. In this dataset, each feature corresponds to a grayscale pixel intensity stored as an integer in the range $[0,16]$.
+We rescale the inputs with $X \leftarrow X/16$ to map values to $[0,1]$, which is a standard feature-scaling step to improve numerical conditioning and optimization behavior in gradient-based methods. \cite[Ch. 12.2.1]{Goodfellow2016}
+We split the dataset into train/validation/test with stratified splits (i.e., each split keeps approximately the same class distribution as the full dataset) using \emph{sklearn.model\_selection.train\_test\_split} with the \emph{stratify} option enabled. The default split is:
+\[
+\text{train}=0.70,\qquad \text{val}=0.15,\qquad \text{test}=0.15,
+\]
+with a fixed \emph{random\_state} for reproducibility.
+
+
+\subsection{Model, objective, and derivatives}\;\\
+The multi-class linear predictor is implemented as
+\[
+S = XW + \mathbf{1}b^\top,\qquad W\in\mathbb{R}^{64\times 10},\ b\in\mathbb{R}^{10},
+\]
+where each column of $W$ corresponds to one class.
+
+Given scores $S\in\mathbb{R}^{n\times 10}$ and integer labels $y\in\{0,\dots,9\}^n$, the mean cross-entropy is computed via a numerically stable \emph{logsumexp}:
+\[
+\ell(W,b) = \frac{1}{n}\sum_{j=1}^n \left(\log\sum_{i=0}^{9} e^{S_{j,i}} - S_{j,y_j}\right).
+\]
+
+When L2 regularization is enabled, the training objective becomes
+\[
+f(W,b)=\ell(W,b) + \frac{\lambda}{2}\|W\|_F^2,
+\]
+which is implemented by adding the penalty to the reported objective and applying weight decay in the gradient:
+\[
+\nabla_W f = \nabla_W \ell + \lambda W,\qquad \nabla_b f = \nabla_b \ell.
+\]
+
+Probabilities are computed with a stable row-wise softmax,
+\[
+P_{j,i} = \frac{e^{S_{j,i}}}{\sum_{k} e^{S_{j,k}}},
+\]
+and we form $D = (P - Y)/n$, where $Y$ is the one-hot encoding of labels. The gradients then follow:
+\[
+\nabla_W \ell = X^\top D,\qquad \nabla_b \ell = \sum_{j=1}^n D_{j,:}.
+\]
+This is implemented in \emph{gradients()} and reused by both SGD and full-batch GD.
+
+
+\subsection{Optimization algorithms}
+
+\subsubsection{Mini-batch SGD}\;\\
+The function \emph{train\_sgd} implements epoch-based mini-batch SGD with optional shuffling.
+For each epoch, we iterate over mini-batches of size $B$ and update
+\[
+W \leftarrow W - \alpha \nabla_W f_{\mathcal{B}}(W,b),\qquad
+b \leftarrow b - \alpha \nabla_b f_{\mathcal{B}}(W,b),
+\]
+where $f_{\mathcal{B}}$ denotes the mini-batch objective (cross-entropy on the batch plus the optional L2 term).
+
+During training, the implementation records the \emph{full} training objective $f(W,b)$ (evaluated on the entire training set), wall-clock timestamps via \emph{time.perf\_counter}, and validation accuracy when validation data is available.
+To make runs comparable across hyperparameters, these quantities are logged every \emph{eval\_every} epochs.
+
+Optionally, we enable a threshold-based stopping rule on validation accuracy: every \emph{eval\_every} epochs we compute $\mathrm{acc}_{val}$ and stop once it remains above \emph{target\_acc} for \emph{target\_patience} consecutive logged evaluations. Otherwise, training runs up to \emph{max\_epochs}.
+
+\subsubsection{Full-batch Gradient Descent baseline}\;\\
+The baseline \emph{train\_full\_gd} uses the same objective and gradients, but updates at each iteration using the full dataset:
+\[
+W \leftarrow W - \alpha \nabla_W f(W,b),\qquad
+b \leftarrow b - \alpha \nabla_b f(W,b).
+\]
+It logs objective values and (optionally) validation accuracy after every iteration. When validation data is available, the same threshold-based rule can be applied: the run stops once $\mathrm{acc}_{val} \ge \emph{target\_acc}$ for \emph{target\_patience} consecutive evaluations; otherwise it runs up to \emph{max\_iters}.
+
+\subsection{Experimental protocol}\;\\
+The experimental workflow in \emph{main.py} follows:
+\begin{enumerate}
+    \item Tune $\lambda$ (L2) for SGD with fixed baseline $(\alpha,B)$ using a grid over \emph{reg\_values}.
+    \item Tune learning rate $\alpha$ for SGD using a grid over \emph{learning\_rates}, keeping best $\lambda$.
+    \item Tune batch size $B$ for SGD using a grid over \emph{batch\_sizes}, keeping best $(\lambda,\alpha)$.
+    \item Final SGD training on train+val, then evaluate on test.
+    \item Tune learning rate for full-batch GD (same $\lambda$), then final GD training on train+val and evaluate on test.
+\end{enumerate}
+
+Each sweep returns a list of \emph{RunResult} objects containing:
+final model, objective history, wall-clock time, and accuracies.
+The helper \emph{pick\_best} selects the best configuration (by default maximizing validation accuracy).
+
+\subsection{Evaluation metrics and visualizations}\;\\
+Classification accuracy is computed as
+\[
+\mathrm{acc}=\frac{1}{n}\sum_{j=1}^n \mathbb{I}(\hat{y}_j=y_j).
+\]
+In addition, \emph{main.py} prints a per-class report via \emph{sklearn.metrics.classification\_report}.
+
+The following figures are generated:
+\begin{itemize}
+    \item objective value vs.\ logged steps (for hyperparameter sweeps),
+    \item validation accuracy vs.\ time (to compare convergence speed),
+    \item validation accuracy vs.\ hyperparameter values ($\lambda$, $\alpha$, $B$),
+    \item confusion matrices on the test set (SGD vs.\ full-batch GD).
+\end{itemize}
+
+To compare SGD against a reference solution, we obtain an empirical reference value $f^\star$ by running long fixed-step full-batch GD and taking the minimum objective value observed along the trajectory. We then plot the optimality gap
+\[
+f(x_k)-f^\star
+\]
+on a log scale as a function of effective data passes (SGD logs every \emph{eval\_every} epochs).
