@@ -4,26 +4,41 @@ In this section we present some of the results of our experiments and discuss th
 In order to measure our performance we split the data into three different randomly chosen subsets: a training set, a validation set and a test set.\TODO{Add percentages of these different sets} The training set is used to compute the gradients and update the parameters of our model during the training phase, the validation set is used to tune the hyperparameters and to monitor the performance during training, and the test set is used to evaluate the final performance of our model after training.
 
 \subsection{Hyperparameter tuning}\;\\
-In order to find good hyperparameters for our models, we followed the approach to tune them seperately on the validation set. We are aware that this approach is not optimal, since the hyperparameters are not independent of each other and therefore it would be better to tune them jointly, e.g. by doing a grid search over the hyperparameter space. \TODO{Is this true?}
+In order to find good hyperparameters for our models, we followed the approach to tune them sequentially on the validation set. We are aware that this approach is not optimal, since the hyperparameters are not independent of each other and therefore it would be better to tune them jointly, e.g. by doing a grid search over the hyperparameter space. However we decided to follow this approach for simplicity.
 \subsubsection{$L^2$ regularization}\;\\
-\TODO{First was $L^2$ reg but why this order?}
+In order to find a good value for the $L^2$ regularization parameter, we tried different values and focused on the final accuracy on the validation set. We found that $L^2$ regularization does have a significant effect on the final accuracy. \TODO{Why is this so visible now?}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=0.5]{plots/valacc-vs-l2.png}
+    \caption{Final validation accuracy vs. $L^2$ regularization parameter for SGD}
+\end{figure}
+\TODO{Abort Creiterion for this plot}
 \subsubsection{Learning rate}\;\\
-Compare different leaning rates for both FGD and SGD:
+Also we compared different learning rates for both FGD and SGD with regards to the accuracy vs. time. The $L^2$ regularization parameter was set to a fixed value of $\lambda=0.01$ and the batchsize for SGD was also fixed at $B = 64$.
 \begin{figure}[ht]
     \centering
     \begin{tabular}{cc}
-        \includegraphics[width=0.5\textwidth]{../presentation/objective-value-vs-epoch.png} &
-        \includegraphics[width=0.5\textwidth]{../presentation/optimality-gap-vs-epoch.png}
+        \includegraphics[width=0.5\textwidth]{plots/valacc-vs-time-vs-lr-SGD.png} &
+        \includegraphics[width=0.5\textwidth]{plots/valacc-vs-time-vs-lr-FGD.png}
     \label{fig:learning_rate_tuning}
     \end{tabular}
-    \caption{Objective value and optimality gap vs. epoch for different learning rates}
+    \caption{Accuracy vs. time for different learning rates in FGD and SGD}
 \end{figure}
+The plots show that the learning rate has a significant impact on the convergence behavior of both FGD and SGD. Also, SGD tends to converge much faster than FGD in general, while still achieving a good final accuracy.
+
 \subsubsection{Batch size}
+The batch size also has a significant impact on the final accuracy. We found that smaller batch sizes tend to converge faster in the early stages of training, while larger batch sizes can achieve a better final accuracy. This is because smaller batch sizes allow for more frequent updates and can therefore make faster progress in the early stages of training, however they can also lead to noisy updates and tend to oscillate around the optimal solution.
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{plots/valacc-vs-batchsize.png}
+    \caption{Validation accuracy vs. batch size for SGD}
+    \label{fig:batch_size_tuning}
+\end{figure}
 
-
+In this experiment, we stopped after a fixed number of epochs or if an accuracy threshold of $0.96$ on the validation set was reached. We found that the optimal batch size for our problem was $64$. (\Cref{fig:batch_size_tuning})
 
 \subsection{Final models and discussion}\;\\
-Finally, we want to compare both our best final models, i.e. our models that achieved the best accuracy on the validation set. We can see that both our models perform fairly well on the test sets, by looking at the confusion matrices (\cref{fig:confusion_matrices}).
+Finally, we want to compare both our best final models, i.e. our models that achieved the best accuracy on the validation set. We can see that both our models perform fairly well on the test sets, by looking at the confusion matrices (\Cref{fig:confusion_matrices}).
 \begin{figure}[ht]
     \centering
     \begin{tabular}{cc}
@@ -34,8 +49,7 @@ Finally, we want to compare both our best final models, i.e. our models that ach
     \label{fig:confusion_matrices}
 \end{figure}
 
-
-Although both models perform very well, the SGD model converges much faster than the FGD model (cf. \cref{fig:accuracy_vs_epoch}), which is a common observation in practice.
+Although both models perform very well, the SGD model needs fewer data passed than the FGD model to converge (cf. \cref{fig:accuracy_vs_epoch}), which is a common observation in practice.
 \begin{figure}[ht]
     \centering
     \begin{tabular}{cc}
@@ -45,6 +59,6 @@ Although both models perform very well, the SGD model converges much faster than
     \caption{Objective value and optimality gap vs. data passes for SGD and FGD on the validation set}
     \label{fig:accuracy_vs_epoch}
 \end{figure}
-This is because SGD updates more often and can therefore make faster progress in the early stages of training, while FGD requires more time to compute the full gradient and update the parameters. However, FGD can achieve a better and more consistent final accuracy than SGD if we allow it to run for enough epochs, since it uses the exact gradient and can therefore make more consistent progress towards the optimal solution. This can be seen very well in the optimality gap plot, since it has a log scale and therefore the oscillations of SGD are visible.
+This is explained by the fact that SGD updates more often and can therefore make faster progress in the early stages of training, while FGD requires more data  for each step by always computing the full gradient for each update. However, FGD can achieve a better and more consistent final accuracy than SGD if we allow it to run for enough epochs. It calculates the exact gradient and can therefore make more consistent progress towards the optimal solution. Due to the logarithmic scale the optimality gap plot shows that the SGD tends to oscillate. 
 
 Overall, the choice between FGD and SGD depends on the specific problem and the computational resources available. For large datasets and limited computational resources SGD is often the only choice because FGD would take to much resources.
