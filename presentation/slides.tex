@@ -270,34 +270,34 @@ from sklearn.datasets import load_digits
     \end{frame}
     \begin{frame}
         \frametitle{Results with SGD}
-        We trained the model for $50$ epochs with a mini-batch size of $B=64$ and a learning rate of $\eta_k = 1$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
+        We trained the final SGD model (up to $1000$ epochs) with $B=64$, $\eta=0.5$, and $\lambda=0$, using a stratified $70/15/15$ train/val/test split and early stopping at $\mathrm{acc}_{val}\ge 0.98$.
         \begin{columns}
             \column{0.6\paperwidth}
             \centering
-            \includegraphics[width=\linewidth]{confusion-matrix-sgd-final-model.png}
+            \includegraphics[width=\linewidth]{confusion-sgd.png}
 
             \column{0.4\paperwidth}
             \centering
             \begin{itemize}
-                \item Train accuracy: $0.983$
-                \item Test accuracy: $0.961$
+                \item Train accuracy: $0.999$
+                \item Test accuracy: $0.974$
                 \item Training Time: 30ms
             \end{itemize}
         \end{columns}
     \end{frame}
        \begin{frame}
         \frametitle{Results with FGD}
-        We trained a full gradient descent reference model for $300$ iterations with a learning rate of $\eta_k = 1$ on a random training set of $70\%$ of the data. The remaining $30\%$ was used as a test set.
+        We trained the final full-batch GD model (up to $1000$ iterations) with $\eta=1.0$ and $\lambda=0$, using the same stratified $70/15/15$ train/val/test split.
         \begin{columns}
             \column{0.5\paperwidth}
             \centering
-            \includegraphics[width=\linewidth]{confusion-matrix-fgd-final-model.png}
+            \includegraphics[width=\linewidth]{confusion-fgd.png}
 
             \column{0.5\paperwidth}
             \centering
             \begin{itemize}
-                \item Train accuracy: $0.957$
-                \item Test accuracy: $0.952$
+                \item Train accuracy: $0.983$
+                \item Test accuracy: $0.66$
                 \item Training Time: 90ms
             \end{itemize}
         \end{columns}
@@ -307,11 +307,11 @@ from sklearn.datasets import load_digits
         \begin{columns}[T]
             \column{0.5\paperwidth}
             \centering
-            \includegraphics[width=\linewidth]{objective-value-vs-epoch.png}
+            \includegraphics[width=\linewidth]{valacc-vs-time-vs-lr-FGD.png}
 
             \column{0.5\paperwidth}
             \centering
-            \includegraphics[width=\linewidth]{optimality-gap-vs-epoch.png}
+            \includegraphics[width=\linewidth]{valacc-vs-time-vs-lr-SGD.png}
         \end{columns}
     \end{frame}
     \begin{frame}
@@ -327,11 +327,7 @@ from sklearn.datasets import load_digits
         \begin{columns}
             \column{0.5\paperwidth}
             \centering
-            \includegraphics[width=\linewidth]{sgd-time-batch.png}
-
-            \column{0.5\paperwidth}
-            \centering
-            \includegraphics[width=\linewidth]{sgd-batch-accuracy.png}
+            \includegraphics[width=\linewidth]{valacc-vs-batchsize.png}
         \end{columns}
     \end{frame}
     \begin{frame}
