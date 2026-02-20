@@ -17,7 +17,7 @@ class SGDConfig:
 
     # threshold-based training
     max_epochs: int = 200
-    target_loss: Optional[float] = None
+    target_acc: Optional[float] = None
     target_patience: int = 1
     eval_every: int = 1
 
@@ -65,15 +65,18 @@ def train_sgd(model: Model, images: np.ndarray, labels: np.ndarray,
     obj0 = full_objective()
     train_loss.append(obj0)
     time_points.append(time.perf_counter() - t0)
-    if val_acc_hist is not None:
-        pred_val = predict(model, val_images)
-        val_acc_hist.append(accuracy(pred_val, val_labels))
 
     hits = 0
-    if cfg.target_loss is not None and obj0 <= cfg.target_loss:
-        hits = 1
-        if hits >= cfg.target_patience:
-            return SGDHistory(train_loss=train_loss, epochs_run=0, time_points=time_points, val_acc=val_acc_hist)
+    if val_acc_hist is not None:
+        pred_val = predict(model, val_images)
+        acc0 = accuracy(pred_val, val_labels)
+        val_acc_hist.append(acc0)
+
+        # Check threshold at epoch 0 (optional)
+        if cfg.target_acc is not None and acc0 >= cfg.target_acc:
+            hits = 1
+            if hits >= cfg.target_patience:
+                return SGDHistory(train_loss=train_loss, epochs_run=0, time_points=time_points, val_acc=val_acc_hist)
 
     for epoch in range(cfg.max_epochs):
         # Shuffle at epoch start (optional)
@@ -100,17 +103,25 @@ def train_sgd(model: Model, images: np.ndarray, labels: np.ndarray,
             obj = full_objective()
             train_loss.append(obj)
             time_points.append(time.perf_counter() - t0)
+
             if val_acc_hist is not None:
                 pred_val = predict(model, val_images)
-                val_acc_hist.append(accuracy(pred_val, val_labels))
+                acc_val = accuracy(pred_val, val_labels)
+                val_acc_hist.append(acc_val)
 
-            if cfg.target_loss is not None:
-                if obj <= cfg.target_loss:
-                    hits += 1
-                else:
-                    hits = 0
+                # Threshold stopping on validation accuracy
+                if cfg.target_acc is not None:
+                    if acc_val >= cfg.target_acc:
+                        hits += 1
+                    else:
+                        hits = 0
 
-                if hits >= cfg.target_patience:
-                    return SGDHistory(train_loss=train_loss, epochs_run=epoch + 1, time_points=time_points, val_acc=val_acc_hist)
+                    if hits >= cfg.target_patience:
+                        return SGDHistory(
+                            train_loss=train_loss,
+                            epochs_run=epoch + 1,
+                            time_points=time_points,
+                            val_acc=val_acc_hist
+                        )
 
     return SGDHistory(train_loss=train_loss, epochs_run=cfg.max_epochs, time_points=time_points, val_acc=val_acc_hist)

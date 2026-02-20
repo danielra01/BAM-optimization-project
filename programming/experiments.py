@@ -50,7 +50,7 @@ def sweep_sgd_l2(
     seed: int,
     max_epochs: int,
     eval_every: int,
-    target_loss: Optional[float],
+    target_acc: Optional[float],
     target_patience: int = 1,
 ) -> list[RunResult]:
     runs: list[RunResult] = []
@@ -64,7 +64,7 @@ def sweep_sgd_l2(
             shuffle=True,
             seed=seed,
             max_epochs=max_epochs,
-            target_loss=target_loss,
+            target_acc=target_acc,
             target_patience=target_patience,
             eval_every=eval_every,
         )
@@ -107,7 +107,7 @@ def sweep_sgd_lr(
     seed: int,
     max_epochs: int,
     eval_every: int,
-    target_loss: Optional[float],
+    target_acc: Optional[float],
     target_patience: int = 1,
 ) -> list[RunResult]:
     runs: list[RunResult] = []
@@ -121,7 +121,7 @@ def sweep_sgd_lr(
             shuffle=True,
             seed=seed,
             max_epochs=max_epochs,
-            target_loss=target_loss,
+            target_acc=target_acc,
             target_patience=target_patience,
             eval_every=eval_every,
         )
@@ -168,7 +168,7 @@ def sweep_sgd_batch(
     seed: int,
     max_epochs: int,
     eval_every: int,
-    target_loss: Optional[float],
+    target_acc: Optional[float],
     target_patience: int = 1,
 ) -> list[RunResult]:
     runs: list[RunResult] = []
@@ -182,7 +182,7 @@ def sweep_sgd_batch(
             shuffle=True,
             seed=seed,
             max_epochs=max_epochs,
-            target_loss=target_loss,
+            target_acc=target_acc,
             target_patience=target_patience,
             eval_every=eval_every,
         )
@@ -225,7 +225,7 @@ def train_final_sgd(
     seed: int,
     max_epochs: int,
     eval_every: int,
-    target_loss: Optional[float],
+    target_acc: Optional[float],
     target_patience: int = 1,
 ) -> RunResult:
     X_final, y_final = _stack_train_val(data)
@@ -238,7 +238,7 @@ def train_final_sgd(
         shuffle=True,
         seed=seed,
         max_epochs=max_epochs,
-        target_loss=target_loss,
+        target_acc=target_acc,
         target_patience=target_patience,
         eval_every=eval_every,
     )
@@ -353,6 +353,6 @@ def train_final_gd(
 
 def reference_f_star_fixed_gd(X_ref, y_ref, *, l2: float, lr: float, max_iters: int) -> float:
     model_ref = init_model(seed=12345)
-    cfg_ref = GDConfig(learning_rate=lr, l2_reg=l2, max_iters=max_iters, target_loss=None)
+    cfg_ref = GDConfig(learning_rate=lr, l2_reg=l2, max_iters=max_iters)
     hist_ref = train_full_gd(model_ref, X_ref, y_ref, cfg_ref)
     return float(min(hist_ref.train_loss))

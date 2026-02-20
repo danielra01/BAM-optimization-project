@@ -23,8 +23,8 @@ def main() -> None:
     seed = 2
 
     max_epochs = 1000
-    eval_every = 5
-    target_loss = 0.96 # None same time budget
+    eval_every = 1
+    target_acc = 0.98 # None => run for max_epochs
 
     # Grids
     reg_values = [0.0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
@@ -42,7 +42,7 @@ def main() -> None:
         seed=seed,
         max_epochs=max_epochs,
         eval_every=eval_every,
-        target_loss=target_loss,
+        target_acc=target_acc,
     )
     best_l2_run = pick_best(sgd_l2_runs, key="val_acc")
     best_l2 = float(best_l2_run.params["l2"])
@@ -70,7 +70,7 @@ def main() -> None:
         seed=seed,
         max_epochs=max_epochs,
         eval_every=eval_every,
-        target_loss=target_loss,
+        target_acc=target_acc,
     )
     best_lr_run = pick_best(sgd_lr_runs, key="val_acc")
     best_lr = float(best_lr_run.params["lr"])
@@ -89,7 +89,7 @@ def main() -> None:
         seed=seed,
         max_epochs=max_epochs,
         eval_every=eval_every,
-        target_loss=target_loss,
+        target_acc=target_acc,
     )
     best_B_run = pick_best(sgd_B_runs, key="val_acc")
     best_B = int(best_B_run.params["B"])
@@ -113,7 +113,7 @@ def main() -> None:
         seed=seed,
         max_epochs=max_epochs,
         eval_every=eval_every,
-        target_loss=None,
+        target_acc=None,
     )
     print("=== FINAL SGD ===")
     print(final_sgd.params)
